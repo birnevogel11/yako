@@ -1,0 +1,21 @@
+[project]
+name = "roly"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "ansible>=12.1.0",
+    "pydantic>=2.12.3",
+    "pyyaml>=6.0.3",
+    "tabulate>=0.9.0",
+    "typer>=0.20.0",
+]
+
+[project.scripts]
+roly = "roly.cli.main:main"
+
+[tool.uv.workspace]
+members = [
+    "temp",
+]
