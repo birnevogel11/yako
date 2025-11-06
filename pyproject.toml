@@ -19,3 +19,60 @@ roly = "roly.cli.main:main"
 members = [
     "temp",
 ]
+
+[tool.black]
+line-length = 119
+
+[tool.ruff]
+line-length = 119
+lint.select = ["ALL"]
+ignore = [
+    # Non fixable rules
+    "ANN001", # https://docs.astral.sh/ruff/rules/missing-type-function-argument
+    "ANN002", # https://docs.astral.sh/ruff/rules/missing-type-args
+    "ANN003", # https://docs.astral.sh/ruff/rules/missing-type-kwargs
+    "ANN201", # https://docs.astral.sh/ruff/rules/missing-return-type-undocumented-public-function
+    "ANN202", # https://docs.astral.sh/ruff/rules/missing-return-type-private-function
+    "ANN204", # https://docs.astral.sh/ruff/rules/missing-return-type-special-method
+    "ANN205", # https://docs.astral.sh/ruff/rules/missing-return-type-static-method
+    "ARG002", # https://docs.astral.sh/ruff/rules/unused-method-argument/
+    "PLR2004", # https://docs.astral.sh/ruff/rules/magic-value-comparison
+    "S603", # https://docs.astral.sh/ruff/rules/subprocess-without-shell-equals-true
+    "S604", # Function call with `shell=True` parameter identified
+    "S605", #  https://docs.astral.sh/ruff/rules/start-process-with-a-shell
+    "S607", # https://docs.astral.sh/ruff/rules/start-process-with-partial-path
+
+    "EM101",
+    "TRY003",
+
+    # Rules to be fixed
+    "D100", # https://docs.astral.sh/ruff/rules/undocumented-public-module
+    "D101", # https://docs.astral.sh/ruff/rules/undocumented-public-class
+    "D102", # https://docs.astral.sh/ruff/rules/undocumented-public-method
+    "D103", # https://docs.astral.sh/ruff/rules/undocumented-public-function
+    "D104", # https://docs.astral.sh/ruff/rules/undocumented-public-package
+    "D105", # https://docs.astral.sh/ruff/rules/undocumented-magic-method
+    "D106", # https://docs.astral.sh/ruff/rules/undocumented-public-nested-class
+    "D107", # https://docs.astral.sh/ruff/rules/undocumented-public-init
+    "D205", # https://docs.astral.sh/ruff/rules/blank-line-after-summary
+    "D212", # https://docs.astral.sh/ruff/rules/multi-line-summary-first-line/
+    "D400", # https://docs.astral.sh/ruff/rules/ends-in-period
+    "D401", # https://docs.astral.sh/ruff/rules/non-imperative-mood
+    "D404", # https://docs.astral.sh/ruff/rules/docstring-starts-with-this
+    "D415", # https://docs.astral.sh/ruff/rules/ends-in-punctuation
+    "DTZ006", # https://docs.astral.sh/ruff/rules/call-datetime-fromtimestamp
+    "DTZ007", # https://docs.astral.sh/ruff/rules/call-datetime-strptime-without-zone
+    "DTZ011", # https://docs.astral.sh/ruff/rules/call-date-today
+    "E501", # https://docs.astral.sh/ruff/rules/line-too-long
+    "FBT001", # https://docs.astral.sh/ruff/rules/boolean-type-hint-positional-argument
+    "FBT002", # https://docs.astral.sh/ruff/rules/boolean-default-value-positional-argument
+    "FBT003", # https://docs.astral.sh/ruff/rules/boolean-positional-value-in-call
+    "FIX001", # https://docs.astral.sh/ruff/rules/line-contains-fixme
+    "FIX002", # https://docs.astral.sh/ruff/rules/line-contains-todo
+    "SIM102", # https://docs.astral.sh/ruff/rules/collapsible-if
+    "T201", # https://docs.astral.sh/ruff/rules/print
+    "TD003", # https://docs.astral.sh/ruff/rules/missing-todo-link
+]
+
+[tool.mypy]
+ignore_missing_imports = true
