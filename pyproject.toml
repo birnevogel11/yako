@@ -35,15 +35,15 @@ ignore = [
     "ANN202", # https://docs.astral.sh/ruff/rules/missing-return-type-private-function
     "ANN204", # https://docs.astral.sh/ruff/rules/missing-return-type-special-method
     "ANN205", # https://docs.astral.sh/ruff/rules/missing-return-type-static-method
+    "ANN401", # https://docs.astral.sh/ruff/rules/any-type/
     "ARG002", # https://docs.astral.sh/ruff/rules/unused-method-argument/
+    "EM101", # https://docs.astral.sh/ruff/rules/raw-string-in-exception
     "PLR2004", # https://docs.astral.sh/ruff/rules/magic-value-comparison
     "S603", # https://docs.astral.sh/ruff/rules/subprocess-without-shell-equals-true
     "S604", # Function call with `shell=True` parameter identified
     "S605", #  https://docs.astral.sh/ruff/rules/start-process-with-a-shell
     "S607", # https://docs.astral.sh/ruff/rules/start-process-with-partial-path
-
-    "EM101",
-    "TRY003",
+    "TRY003", # https://docs.astral.sh/ruff/rules/raise-vanilla-args
 
     # Rules to be fixed
     "D100", # https://docs.astral.sh/ruff/rules/undocumented-public-module
