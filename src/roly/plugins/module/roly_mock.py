@@ -1,17 +1,18 @@
 # Copyright 2022 Hewlett Packard Enterprise Development LP
 from ansible.module_utils.basic import AnsibleModule
 
+MODULE_ARGS = {
+    "task_name": {"type": "str", "required": True},
+    "original_module_name": {"type": "str", "required": True},
+    "consider_changed": {"type": "bool", "required": False, "default": False},
+    "result_dict": {"type": "dict", "required": False},
+}
+
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
-    module_args = {
-        "task_name": dict(type="str", required=True),
-        "original_module_name": dict(type="str", required=True),
-        "consider_changed": dict(type="bool", required=False, default=False),
-        "result_dict": dict(type="dict", required=False),
-    }
 
-    module = AnsibleModule(argument_spec=module_args, supports_check_mode=True)
+    module = AnsibleModule(argument_spec=MODULE_ARGS, supports_check_mode=True)
     module.log(msg="Roly mock module started")
 
     # CHANGED

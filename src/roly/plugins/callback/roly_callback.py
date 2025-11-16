@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import contextlib
-import enum
+import functools
 import sys
 from collections import ChainMap
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from ansible import constants as C  # # noqa: N812
 from ansible.errors import AnsibleUndefinedVariable
@@ -12,15 +12,22 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.plugins.callback import CallbackBase
 from ansible.template import Templar
 from ansible.utils.display import Display
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, ValidationError
+
+from roly.given import TestTaskConfig  # noqa: TC001
+from roly.test_case import TestCase
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
+    from typing import Literal, Self
 
     from ansible.executor.task_result import CallbackTaskResult
     from ansible.inventory.host import Host
     from ansible.playbook.play import Play
     from ansible.playbook.task import Task
+
+    from roly.assert_check import AssertResult
+    from roly.given import TestCaseAssert
 
 global_display = Display()
 
@@ -38,120 +45,35 @@ def _get_task_playbook_vars(host: Host, task: Task, extra_vars: dict[str, Any] |
     return variables
 
 
-class RolyError(Exception):
+class RolyAnsiblePluginError(Exception):
     def __init__(self, message: str, exit_code: int = 1) -> None:
         super().__init__(message)
-        global_display.display(msg=f"[ROLY_ERROR]: {message}", color=C.COLOR_ERROR)
+        global_display.display(msg=f"[ROLY_ERROR]: {message}", color=C.COLOR_ERROR if exit_code else C.COLOR_OK)
         sys.exit(exit_code)
 
 
-class AssertMode(enum.Enum):
-    Equal = "=="
-    NotEqual = "!="
-    Less = "<"
-    Greater = ">"
-    LessThen = "<="
-    GreaterThan = ">="
-    In = "in"
-    NotIn = "not_in"
-    IsNone = "is_none"
-    IsNotNone = "is_not_none"
-    IsTrue = "true"
-    IsFalse = "false"
-
-
-class MockActionConfig(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    result_dicts: dict[str, Any] = {}
-    files: dict[str, str] = {}
-    changed: bool = False
-
-    def gen_action(self, original_action_name: str | None = None) -> tuple[str, dict[str, Any]]:
-        new_action_name = "roly_mock"
-        new_action_name_args = {
-            "task_name": new_action_name,
-            "original_module_name": original_action_name,
-            "consider_changed": self.changed,
-            "result_dict": self.result_dicts,
-        }
-        return new_action_name, new_action_name_args
-
-
-class MockActionCustomConfig(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    custom_action: dict[str, dict[str, Any]]
-
-    # TODO: (bv11) Check valid state, mode=after
-
-    # TODO: (bv11) Remove check
-    def gen_action(self, original_action_name: str | None = None) -> tuple[str, dict[str, Any]]:
-        if len(self.custom_action) != 1:
-            msg = f"custom_action can only have one key as module_name. custom_action: {self.custom_action}"
-            raise ValueError(msg)
-
-        new_action_name = next(self.custom_action)  # type: ignore[call-overload]
-        return new_action_name, self.custom_action[new_action_name]
-
-
-class TestCaseAssert(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    name: str = ""
-    value: str | None = None
-    mode: AssertMode = AssertMode.Equal
-
-    # TODO: (bv11) Check valid state, mode=after
-
-
-class TestTaskConfig(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    name: str
-    extra_vars: dict[str, Any] = {}
-    mock: MockActionConfig | MockActionCustomConfig | None = None
-
-    assert_inputs: list[TestCaseAssert] = []
-    assert_outputs: list[TestCaseAssert] = []
-
-    should_be_skipped: bool | None = None
-    should_be_changed: bool | None = None
-    should_fail: bool | None = None
-
-
-class TestCaseGiven(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    files: dict[str, str] = {}
-    extra_vars: dict[str, Any] = {}
-    tasks: list[TestTaskConfig] = []
-
-
-class RolyTestConfig(BaseModel):
+class RolyTestConfig(TestCase):
     model_config = ConfigDict(frozen=True)
 
     ROLY_TEST_CONFIG_KEY: ClassVar[str] = "ROLY_TEST_CASE_CONFIG"
 
-    name: str
-    given: TestCaseGiven
-    playbooks: list[str] = []
-    play_extra_vars: dict[str, Any] = {}
+    # The variable is from ansible, not found input config
+    play_extra_vars_base: dict[str, Any] = {}  # noqa: RUF012
 
     @classmethod
-    def from_playbook(cls, play_extra_vars: dict[str, Any]) -> Self:
-        if not (raw_test_config := play_extra_vars.get(cls.ROLY_TEST_CONFIG_KEY)):
+    def from_playbook(cls, play_extra_vars_base: dict[str, Any]) -> Self:
+        if not (raw_test_config := play_extra_vars_base.get(cls.ROLY_TEST_CONFIG_KEY)):
             msg = f"{cls.ROLY_TEST_CONFIG_KEY} not found!"
-            raise RolyError(msg)
+            raise RolyAnsiblePluginError(msg)
 
         # Variables placed into the config need to be instantiated with extra vars
-        templar = Templar(loader=DataLoader(), variables=play_extra_vars)
+        templar = Templar(loader=DataLoader(), variables=play_extra_vars_base)
         try:
             raw_test_config = templar.template(raw_test_config)
         except Exception as e:
-            raise RolyError("Failed to expand config vars") from e
+            raise RolyAnsiblePluginError("Failed to expand config vars") from e
 
-        raw_test_config["play_extra_vars"] = play_extra_vars
+        raw_test_config["play_extra_vars_base"] = play_extra_vars_base
 
         return cls.model_validate(raw_test_config)
 
@@ -253,46 +175,79 @@ def _mock_task(task: Task, task_config: TestTaskConfig) -> None:
     task.args = new_action_name_args
 
 
-# TODO: (bv11) Finish it and think about how to report it
-def _assert_inputs(task: Task, roly_state: RolyInternalState) -> None:
+def _assert_stmts(
+    stmts: list[TestCaseAssert],
+    get_actual_value_func: Callable[[str], Any],
+) -> tuple[list[AssertResult], list[AssertResult]]:
+    test_results = [stmt.check(get_actual_value_func) for stmt in stmts]
+    return [result for result in test_results if result.passed], [
+        result for result in test_results if not result.passed
+    ]
+
+
+def _get_task_args(task_args: dict[str, Any], name: str) -> Any:
+    return task_args[name]
+
+
+def _assert_inputs_loop(task: Task, roly_state: RolyInternalState) -> None:
     if not (task_config := roly_state.task_config) or not (var_templar := roly_state.var_templar):
         return
 
-    if not task.loop:
-        task_args = var_templar.template_task(task.args)
-        for assert_stmt in task_config.assert_inputs:
-            name = assert_stmt.name
-            expected_value = assert_stmt.value
-            mode = assert_stmt.mode
-            # TODO: (bv11) handle not found error
-            actual_value = task_args[name]
-            raise NotImplementedError
+    for loop_value in task.loop:
+        loop_var_templar = var_templar.generate_task_loop_templar(loop_value)
+        task_args = loop_var_templar.template_task(task.args)
+
+        # Find one of match
+        passed_asserts, failed_asserts = _assert_stmts(
+            task_config.assert_inputs,
+            functools.partial(_get_task_args, task_args),
+        )
+        if passed_asserts and not failed_asserts:
+            return
+
+    _report_assert(task.name, passed_asserts, failed_asserts, "inputs_loop")
+
+
+def _assert_inputs_normal(task: Task, roly_state: RolyInternalState) -> None:
+    if not (task_config := roly_state.task_config) or not (var_templar := roly_state.var_templar):
+        return
+
+    task_args = var_templar.template_task(task.args)
+    passed_asserts, failed_asserts = _assert_stmts(
+        task_config.assert_inputs,
+        functools.partial(_get_task_args, task_args),
+    )
+    _report_assert(task.name, passed_asserts, failed_asserts, "inputs")
+
+
+def _assert_inputs(task: Task, roly_state: RolyInternalState) -> None:
+    if task.loop:
+        _assert_inputs_loop(task, roly_state)
     else:
-        # bv11: If the final assert is to find one matched loop value set, do we really need it?
-        # I have no idea.
-        for loop_value in task.loop:
-            loop_var_templar = var_templar.generate_task_loop_templar(loop_value)
-            task_args = loop_var_templar.template_task(task_args)
-
-            # Find one of match
-            for assert_stmt in task_config.assert_inputs:
-                name = assert_stmt.name
-                expected_value = assert_stmt.value
-                mode = assert_stmt.mode
-                # TODO: (bv11) handle not found error
-                actual_value = task_args[name]
-                raise NotImplementedError
+        _assert_inputs_normal(task, roly_state)
 
 
-# TODO: (bv11) Finish it
 def _assert_outputs(task_config: TestTaskConfig, result_dict: dict[str, Any]) -> None:
     var_templar = SimpleVariableTemplar((result_dict,))
-    for assert_stmt in task_config.assert_outputs:
-        name = assert_stmt.name
-        expected_value = assert_stmt.value
-        mode = assert_stmt.mode
-        actual_value = var_templar.template_task("{{  " + name + "  }}")
-        raise NotImplementedError
+    passed_asserts, failed_asserts = _assert_stmts(
+        task_config.assert_outputs,
+        lambda name: var_templar.template_task("{{  " + name + "  }}"),
+    )
+    _report_assert(task_config.name, passed_asserts, failed_asserts, "outputs")
+
+
+def _report_assert(
+    task_name: str,
+    passed_asserts: list[AssertResult],
+    failed_asserts: list[AssertResult],
+    state: Literal["inputs", "outputs", "inputs_loop"],
+) -> None:
+    if passed_asserts and not failed_asserts:
+        _display_message_ok(f"Pass for assert {state}. task: {task_name}")
+    if failed_asserts:
+        failed_msgs = "\n".join(msg or "" for result in failed_asserts if (msg := result.err_msg or ""))
+        msg = f"Failed to assert {state}. task: {task_name}, failed_asserts: {failed_msgs}"
+        raise RolyAnsiblePluginError(msg)
 
 
 def _assert_task_state(
@@ -315,11 +270,11 @@ def _assert_task_state(
             err_msgs.append(f"Task {var_name} state error. actual: {actual_state}, expected: {expected_state}")
 
     if task_config.should_fail and task_config.should_fail == should_fail and rescue_fail:
-        raise RolyError("Task failed as expected. Stop here with exit code 0", exit_code=0)
+        raise RolyAnsiblePluginError("Task failed as expected. Stop here with exit code 0", exit_code=0)
 
     if err_msgs:
         msg = "Check task state error: " + "\n".join(err_msgs)
-        raise RolyError(msg)
+        raise RolyAnsiblePluginError(msg)
 
 
 class CallbackModule(CallbackBase):
@@ -330,7 +285,10 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_play_start(self, play: Play) -> Play:
         play_extra_vars = play.get_variable_manager().extra_vars
-        test_config = RolyTestConfig.from_playbook(play_extra_vars)
+        try:
+            test_config = RolyTestConfig.from_playbook(play_extra_vars)
+        except ValidationError as err:
+            raise RolyAnsiblePluginError("Invalid Roly test case config") from err
         play_extra_vars.update(test_config.given.extra_vars)
 
         self._roly = RolyInternalState(test_config=test_config)
