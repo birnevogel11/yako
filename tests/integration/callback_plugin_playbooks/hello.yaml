@@ -1,0 +1,10 @@
+- hosts: all
+  any_errors_fatal: true
+  tasks:
+    - name: Hello world
+      debug:
+        msg: "Hello World!"
+
+    # - name: debug
+    #   debug:
+    #     var: ROLY_TEST_CASE_CONFIG

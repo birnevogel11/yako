@@ -1,0 +1,4 @@
+ROLY_TEST_CASE_CONFIG:
+  name: "test_basic"
+  playbooks:
+    - "hello.yaml"

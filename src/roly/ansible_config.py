@@ -18,10 +18,10 @@ def make_roly_ansible_config(
         "interpreter_python": str(Path(python_bin or sys.executable).resolve()),
     }
     if enable_roly_callback:
-        default_config["callback_enabled"] = "roly_callback"
+        default_config["callbacks_enabled"] = "roly_callback"
 
     config = configparser.ConfigParser()
-    config["DEFAULT"] = default_config
+    config["defaults"] = default_config
 
     if output_path:
         output_path.parent.mkdir(exist_ok=True, parents=True)

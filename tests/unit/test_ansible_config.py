@@ -13,11 +13,11 @@ from roly.ansible_config import make_roly_ansible_config
             True,
             snapshot(
                 """\
-[DEFAULT]
+[defaults]
 library = /no-such-dir/plugins/module
 callback_plugins = /no-such-dir/plugins/callback
 interpreter_python = /no-such/python3
-callback_enabled = roly_callback
+callbacks_enabled = roly_callback
 
 """,
             ),
@@ -26,7 +26,7 @@ callback_enabled = roly_callback
             False,
             snapshot(
                 """\
-[DEFAULT]
+[defaults]
 library = /no-such-dir/plugins/module
 callback_plugins = /no-such-dir/plugins/callback
 interpreter_python = /no-such/python3

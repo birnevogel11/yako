@@ -86,3 +86,6 @@ dev = [
     "pytest>=9.0.1",
     "ruff>=0.14.4",
 ]
+
+[tool.pytest.ini_options]
+markers = ["integration",]
