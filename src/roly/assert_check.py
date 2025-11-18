@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import enum
 import unittest
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
+
+if TYPE_CHECKING:
+    from typing import Self
 
 
 class FileMode(enum.Enum):
@@ -25,10 +28,10 @@ class AssertMode(enum.Enum):
     NotIn = "not_in"
     IsNone = "is_none"
     IsNotNone = "is_not_none"
-    IsTrue = "true"
-    IsFalse = "false"
-    IsNotTrue = "not_true"
-    IsNotFalse = "not_false"
+    IsTrue = "is_true"
+    IsFalse = "is_false"
+    IsNotTrue = "is_not_true"
+    IsNotFalse = "is_not_false"
 
 
 MAPPING_ASSERT_FUNCTIONS = {
@@ -67,6 +70,25 @@ class AssertStmt(BaseModel):
     mode: AssertMode = AssertMode.Equal
     msg: str | None = None
     file: FileMode = FileMode.No
+
+    @model_validator(mode="after")  # type: ignore[misc]
+    def validate_mode(self) -> Self:
+        if (
+            self.mode
+            in (
+                AssertMode.IsNone,
+                AssertMode.IsNotNone,
+                AssertMode.IsTrue,
+                AssertMode.IsFalse,
+                AssertMode.IsNotTrue,
+                AssertMode.IsNotFalse,
+            )
+            and self.expected is not None
+        ):
+            msg = f"expected should not have value in these modes. actual: {self.actual}, mode: {self.mode}"
+            raise ValueError(msg)
+
+        return self
 
     def check(self) -> AssertResult:
         try:

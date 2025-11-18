@@ -126,13 +126,10 @@ class RolyInternalState(BaseModel):
 
         Caution: It changes the `task` argument in place.
         """
-        print("here")
         self.task_config, new_task_name, new_task_ignore_errors = self._find_task_config(host, task)
-        print(self.task_config, new_task_name, new_task_ignore_errors)
         self.var_templar = (
             VariableTemplar(host, task, self.task_config, self.test_config) if self.task_config else None
         )
-        print("here4")
 
         # Change task name and ignore error state
         task.task_name = new_task_name

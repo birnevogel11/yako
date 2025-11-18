@@ -5,6 +5,7 @@ from pathlib import Path
 
 def make_roly_ansible_config(
     enable_roly_callback: bool = True,
+    *,
     base_dir: Path | None = None,
     python_bin: str | None = None,
     output_path: Path | None = None,
