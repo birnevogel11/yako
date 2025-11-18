@@ -109,4 +109,4 @@ class TestCaseGiven(BaseModel):
 
     files: dict[str, str] = {}
     extra_vars: dict[str, Any] = {}
-    tasks: list[TestTaskConfig] = []
+    mock_tasks: list[TestTaskConfig] = []

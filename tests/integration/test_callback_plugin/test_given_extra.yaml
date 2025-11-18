@@ -1,0 +1,9 @@
+ROLY_TEST_CASE_CONFIG:
+  name: "test_given_extra"
+  given:
+    extra_vars:
+      given_extra: "whats_life_mean_to_you"
+  tasks:
+    - name: Hello world
+      debug:
+        var: given_extra

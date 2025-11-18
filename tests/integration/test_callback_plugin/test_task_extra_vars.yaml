@@ -1,0 +1,11 @@
+ROLY_TEST_CASE_CONFIG:
+  name: "test_task_extra_vars"
+  given:
+    mock_tasks:
+      - name: "Mock target"
+        extra_vars:
+          task_extra_var: "whats_life_mean_to_you"
+  tasks:
+    - name: Mock target
+      debug:
+        msg: "A book: {{ task_extra_var }}"

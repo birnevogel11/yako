@@ -69,9 +69,12 @@ class RolyTestConfig(TestCase):
         # Variables placed into the config need to be instantiated with extra vars
         templar = Templar(loader=DataLoader(), variables=play_extra_vars_base)
         try:
-            raw_test_config = templar.template(raw_test_config)
-        except Exception as e:
-            raise RolyAnsiblePluginError("Failed to expand config vars") from e
+            render_raw_test_config = {key: value for key, value in raw_test_config.items() if key != "tasks"}
+            render_raw_test_config = templar.template(render_raw_test_config)
+            raw_test_config.update(render_raw_test_config)
+        except Exception as err:  # noqa: BLE001
+            msg = f"Failed to expand config vars. err: {err}"
+            raise RolyAnsiblePluginError(msg)  # noqa: B904
 
         raw_test_config["play_extra_vars_base"] = play_extra_vars_base
 
@@ -145,7 +148,11 @@ class RolyInternalState(BaseModel):
         new_task_name = task_var_expander.template(task.name)
         return (
             next(
-                (task_config for task_config in self.test_config.given.tasks if new_task_name == task_config.name),
+                (
+                    task_config
+                    for task_config in self.test_config.given.mock_tasks
+                    if new_task_name == task_config.name
+                ),
                 None,
             ),
             new_task_name,
