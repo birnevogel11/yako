@@ -18,7 +18,7 @@ def run_module():
     # CHANGED
     result = {
         "changed": module.params["consider_changed"],
-        "msg": f"Roly Mock module called. Original module: {module.params['original_module_name']}",
+        "msg": f"Roly Mock module called. Task name: {module.params['task_name']}, Original module: {module.params['original_module_name']}",
     }
 
     # RESULT DICT

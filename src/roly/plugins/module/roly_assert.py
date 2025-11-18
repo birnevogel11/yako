@@ -5,10 +5,10 @@ from roly.assert_check import AssertStmt
 
 MODULE_ARGS = {
     "stmts": {"type": "list", "required": False},
-    "actual": {"type": "any", "required": False},
-    "expected": {"type": "any", "required": False},
+    "actual": {"required": False},
+    "expected": {"required": False},
     "mode": {"type": "str", "required": False, "default": "=="},
-    "file": {"type": "bool", "required": False, "default": False},
+    "file": {"type": "str", "required": False, "default": "no"},
     "msg": {"type": "str", "required": False, "default": ""},
 }
 
@@ -21,8 +21,7 @@ class AssertStmts(BaseModel):
     def check(self) -> tuple[bool, str]:
         results = [stmt.check() for stmt in self.stmts]
         failed_msgs = [result.err_msg or "" for result in results if not result.passed]
-
-        return bool(not failed_msgs), "\n".join(["fail(s):", *failed_msgs])
+        return bool(not failed_msgs), "fail(s):\n\n" + "\n\n=======\n\n".join(failed_msgs)
 
 
 def run_module():
@@ -30,16 +29,17 @@ def run_module():
 
     module = AnsibleModule(argument_spec=MODULE_ARGS, supports_check_mode=True)
     module.log(msg="Roly assert module started")
+    module.log(msg=f"{'actual' in module.params}, {'stmts' in module.params}")
 
-    match ("actual" in module.params, "stmts" in module.params):
+    match (bool(module.params.get("actual")), bool(module.params.get("stmts"))):
         case (True, False):
-            stmts = [AssertStmt.model_validate(module.params)]
+            stmts = AssertStmts.model_validate({"stmts": [AssertStmt.model_validate(module.params)]})
         case (False, True):
             stmts = AssertStmts.model_validate(module.params)
         case _:
             module.fail_json(msg="Single or multiple assert statements are required", changed=False)
 
-    passed, failed_msg = stmts.check(module)
+    passed, failed_msg = stmts.check()
     if passed:
         module.exit_json(changed=False)
     else:
