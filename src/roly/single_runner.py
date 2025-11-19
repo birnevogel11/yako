@@ -58,10 +58,10 @@ def _run_ansible_playbook(
             f"@{roly_test_case_path.resolve()}",
         ),
         *(extra_args or ()),
-        *(str(playbook_path.resolve()),),
+        str(playbook_path.resolve()),
     )
 
-    return subprocess.run(cmd, env=env, cwd=ws_dir, check=False, encoding="utf8", capture_output=True)
+    return subprocess.run(cmd, env=env, cwd=ws_dir, check=False, encoding="utf8", capture_output=False)
 
 
 def run_single_test(test_case_path: Path, extra_args: list[str] | None = None) -> subprocess.CompletedProcess[str]:

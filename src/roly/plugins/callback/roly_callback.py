@@ -82,17 +82,13 @@ class RolyTestConfig(TestCase):
 
 
 class SimpleVariableTemplar:
-    # TODO: (bv11) parse the value with pydantic as practice
     def __init__(self, variables: Iterable[dict[str, Any]]) -> None:
         self._variables = dict(ChainMap(*variables))
         self._templar: Templar | None = None
 
-    def _prepare_templar(self) -> Templar:
-        return Templar(loader=DataLoader(), variables=self._variables)
-
     def template_task(self, raw: Any) -> Any:
         if not self._templar:
-            self._templar = self._prepare_templar()
+            self._templar = Templar(loader=DataLoader(), variables=self._variables)
 
         return self._templar.template(raw)
 
@@ -232,10 +228,10 @@ def _assert_inputs(task: Task, roly_state: RolyInternalState) -> None:
 
 
 def _assert_outputs(task_config: TestTaskConfig, result_dict: dict[str, Any]) -> None:
-    var_templar = SimpleVariableTemplar((result_dict,))
+    var_templar = Templar(loader=DataLoader(), variables=result_dict)
     passed_asserts, failed_asserts = _assert_stmts(
         task_config.assert_outputs,
-        lambda name: var_templar.template_task("{{  " + name + "  }}"),
+        var_templar.resolve_variable_expression,
     )
     _report_assert(task_config.name, passed_asserts, failed_asserts, "outputs")
 

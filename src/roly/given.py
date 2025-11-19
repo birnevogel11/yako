@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, Any
 
+import ansible
 from pydantic import AfterValidator, BaseModel, ConfigDict
 
 from roly.assert_check import AssertMode, AssertResult, AssertStmt, FileMode
@@ -59,7 +60,7 @@ class TestCaseAssert(BaseModel):
         result = None
         try:
             result = self._to_assert_stmt(get_actual_value_func).check()
-        except KeyError as err:
+        except (KeyError, ansible.errors.AnsibleUndefinedVariable) as err:
             result = self._to_var_not_found_result(err)
         except Exception as err:  # noqa: BLE001
             result = self._to_unknown_error_result(err)
@@ -72,11 +73,11 @@ class TestCaseAssert(BaseModel):
             expected=self.value,
             mode=self.mode,
             file=self.file,
-            msg=self.msg,
+            msg=self.msg or f"variable name: {self.name}",
         )
 
     def _to_unknown_error_result(self, err: Exception, msg: str | None = None) -> AssertResult:
-        msg = msg or f"Unknown error. assert_stmt: {self}, err: {err}"
+        msg = msg or f"Unknown error. assert_stmt: {self}, err: {err}, err_type: {type(err)}"
         return AssertResult(
             passed=False,
             actual_value=None,
@@ -86,7 +87,7 @@ class TestCaseAssert(BaseModel):
         )
 
     def _to_var_not_found_result(self, err: Exception) -> AssertResult:
-        return self._to_unknown_error_result(err, f"Input variable: {self.name} not found, err: {err}")
+        return self._to_unknown_error_result(err, f"Variable: {self.name} not found, err: {err}")
 
 
 class TestTaskConfig(BaseModel):
