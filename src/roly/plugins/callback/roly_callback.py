@@ -48,7 +48,10 @@ def _get_task_playbook_vars(host: Host, task: Task, extra_vars: dict[str, Any] |
 class RolyAnsiblePluginError(Exception):
     def __init__(self, message: str, exit_code: int = 1) -> None:
         super().__init__(message)
-        global_display.display(msg=f"[ROLY_ERROR]: {message}", color=C.COLOR_ERROR if exit_code else C.COLOR_OK)
+        if exit_code:
+            global_display.display(msg=f"[ROLY_ERROR]: {message}", color=C.COLOR_ERROR)
+        else:
+            global_display.display(msg=f"[ROLY]: {message}", color=C.COLOR_OK)
         sys.exit(exit_code)
 
 
@@ -267,7 +270,10 @@ def _assert_task_state(
     for var_name, actual_state in check_states.items():
         expected_state = getattr(task_config, var_name, None)
         if expected_state is not None and actual_state is not None:
-            err_msgs.append(f"Task {var_name} state error. actual: {actual_state}, expected: {expected_state}")
+            if expected_state != actual_state:
+                err_msgs.append(f"Task {var_name} state error. actual: {actual_state}, expected: {expected_state}")
+            else:
+                _display_message_ok(f"{var_name} state check ok. expected_state: {expected_state}")
 
     if task_config.should_fail and task_config.should_fail == should_fail and rescue_fail:
         raise RolyAnsiblePluginError("Task failed as expected. Stop here with exit code 0", exit_code=0)

@@ -1,0 +1,17 @@
+ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+  is_passed: false
+  search_keyword: >-
+    [ROLY_ERROR]: Check task state error: Task should_fail state error.
+    actual: False, expected: True
+
+ROLY_TEST_CASE_CONFIG:
+  name: "test_should_fail"
+  given:
+    mock_tasks:
+      - name: Mock target
+        should_fail: true
+
+  tasks:
+    - name: Mock target
+      debug:
+        msg: "Snowball"

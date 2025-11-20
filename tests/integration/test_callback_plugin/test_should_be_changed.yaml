@@ -1,0 +1,16 @@
+ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+  search_keyword: "[ROLY]: should_be_changed state check ok. expected_state: True"
+
+ROLY_TEST_CASE_CONFIG:
+  name: "test_should_be_changed"
+  given:
+    mock_tasks:
+      - name: Mock target
+        mock:
+          changed: true
+        should_be_changed: true
+
+  tasks:
+    - name: Mock target
+      debug:
+        msg: "Hello, world!"

@@ -61,7 +61,7 @@ def _run_ansible_playbook(
         str(playbook_path.resolve()),
     )
 
-    return subprocess.run(cmd, env=env, cwd=ws_dir, check=False, encoding="utf8", capture_output=False)
+    return subprocess.run(cmd, env=env, cwd=ws_dir, check=False, encoding="utf8", capture_output=True)
 
 
 def run_single_test(test_case_path: Path, extra_args: list[str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -101,5 +101,6 @@ def run_single_test_cli(test_case_path: Path, show_stdout: bool = True) -> None:
     if show_stdout:
         logger.info("Test case result:")
         print(result.stdout)
+        print(result.stderr)
 
     sys.exit(result.returncode)

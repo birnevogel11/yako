@@ -1,17 +1,17 @@
 ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
   is_passed: false
   search_keyword: >-
-    [ROLY_ERROR]: Failed to assert inputs. task: Hello world,
-    failed_asserts: 'Hello' != 'World' - variable name: msg
+    [ROLY_ERROR]: Failed to assert outputs. task: Hello world,
+    failed_asserts: 'Hello' != 'not_equal' - variable name: msg
 
 ROLY_TEST_CASE_CONFIG:
-  name: "test_assert_input_fail"
+  name: "test_assert_output_failed"
   given:
     mock_tasks:
       - name: Hello world
-        assert_inputs:
+        assert_outputs:
           - name: msg
-            value: World
+            value: not_equal
   tasks:
     - name: Hello world
       debug:

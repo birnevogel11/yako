@@ -1,0 +1,14 @@
+ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+  search_keyword: "Roly Mock module called. Task name: roly_mock, Original module: tempfile"
+
+ROLY_TEST_CASE_CONFIG:
+  name: "test_mock_basic"
+  given:
+    mock_tasks:
+      - name: Create a temp folder
+        mock: {}
+  tasks:
+    - name: Create a temp folder
+      tempfile:
+        state: directory
+        suffix: build

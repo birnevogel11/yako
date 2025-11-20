@@ -15,7 +15,7 @@ def make_roly_ansible_config(
     default_config = {
         "library": str(base_dir / "plugins" / "module"),
         "callback_plugins": str(base_dir / "plugins" / "callback"),
-        "interpreter_python": str(Path(python_bin or sys.executable).resolve()),
+        "interpreter_python": str(Path(python_bin or sys.executable)),
     }
     if enable_roly_callback:
         default_config["callbacks_enabled"] = "roly_callback"

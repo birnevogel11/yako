@@ -1,3 +1,6 @@
+ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+  search_keyword: "[ROLY]: Pass for assert inputs."
+
 ROLY_TEST_CASE_CONFIG:
   name: "test_assert_input"
   given:

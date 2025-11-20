@@ -1,6 +1,9 @@
+ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+  search_keyword: "Hello, world!"
+
 ROLY_TEST_CASE_CONFIG:
   name: "test_basic"
   tasks:
     - name: Hello world
       debug:
-        msg: "Hello World!"
+        msg: "Hello, world!"

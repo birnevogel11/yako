@@ -1,0 +1,16 @@
+ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+  search_keyword: |
+    [ROLY]: should_fail state check ok. expected_state: True
+    [ROLY]: Task failed as expected. Stop here with exit code 0
+
+ROLY_TEST_CASE_CONFIG:
+  name: "test_should_fail"
+  given:
+    mock_tasks:
+      - name: Mock target
+        should_fail: true
+
+  tasks:
+    - name: Mock target
+      fail:
+        msg: "You're already perfect."

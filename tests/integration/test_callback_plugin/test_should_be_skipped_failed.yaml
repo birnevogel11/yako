@@ -1,0 +1,17 @@
+ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+  is_passed: false
+  search_keyword: >-
+    [ROLY_ERROR]: Check task state error: Task should_be_skipped state error.
+    actual: False, expected: True
+
+ROLY_TEST_CASE_CONFIG:
+  name: "test_should_be_skipped"
+  given:
+    mock_tasks:
+      - name: Mock target
+        should_be_skipped: true
+
+  tasks:
+    - name: Mock target
+      debug:
+        msg: "Hello, world!"
