@@ -29,6 +29,17 @@ def _make_content_playbook(raw_content: list[dict[str, Any]]) -> list[dict[str, 
     return [{**PLAYBOOK_DEFAULT_CONTENT, "tasks": raw_content}]
 
 
+def _search_ansible_playbook() -> Path | None:
+    bin_path = Path(sys.executable).parent / "ansible-playbook"
+    if bin_path.exists():
+        return bin_path
+
+    if default_bin_path := shutil.which("ansible-playbook"):
+        return Path(default_bin_path)
+
+    return None
+
+
 def _run_ansible_playbook(
     *,
     ws_dir: Path,
@@ -37,9 +48,9 @@ def _run_ansible_playbook(
     ansible_cfg_path: Path,
     extra_args: list[str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    if not (bin_path := shutil.which("ansible-playbook")):
+    ansible_playbook_bin = _search_ansible_playbook()
+    if not ansible_playbook_bin:
         raise RuntimeError("ansible-playbook is unavailable.")
-    ansible_playbook_bin = Path(bin_path).resolve()
 
     env = {
         "ANSIBLE_CFG": str(ansible_cfg_path),
@@ -47,7 +58,7 @@ def _run_ansible_playbook(
     }
     cmd: tuple[str, ...] = (
         *(
-            str(ansible_playbook_bin.resolve()),
+            str(ansible_playbook_bin),
             "-v",
             "--connection=local",
             "--inventory",
@@ -60,6 +71,7 @@ def _run_ansible_playbook(
         *(extra_args or ()),
         str(playbook_path.resolve()),
     )
+    logger.debug("Run ansible-playbook command: %s", cmd)
 
     return subprocess.run(cmd, env=env, cwd=ws_dir, check=False, encoding="utf8", capture_output=True)
 
@@ -72,6 +84,7 @@ def run_single_test(test_case_path: Path, extra_args: list[str] | None = None) -
         ws_dir = Path(raw_tmp_dir).resolve()
         ansible_cfg_path = ws_dir / "ansible.cfg"
         make_roly_ansible_config(output_path=ansible_cfg_path)
+        logger.debug("Ansible config: %s", ansible_cfg_path.read_text())
 
         if test_case.tasks:
             # Create a tmp playbook and assign it back
