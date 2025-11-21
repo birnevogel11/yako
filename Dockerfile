@@ -8,20 +8,22 @@ RUN set -ex \
     && apt upgrade -y \
     && apt install -y build-essential curl wget git pigz moreutils
 
-COPY . /roly
+COPY ./scripts/entrypoint.sh /entrypoint.sh
+COPY . /home/ubuntu/roly
 
 RUN set -ex \
-    && uv python install 3.13 \
-    && uv venv -p 3.13 /app \
-    && uv pip install --python /app/bin/python3 tox black ruff tox-uv ansible \
+    && chown -R "$(id -u ubuntu):$(id -g ubuntu)" /home/ubuntu/roly
+
+USER ubuntu
+
+RUN set -ex \
+    && uv python install 3.14 \
+    && uv venv -p 3.14 /home/ubuntu/app \
+    && uv pip install --python /home/ubuntu/app/bin/python3 tox black ruff tox-uv ansible \
         ansible-lint pudb typer GitPython pyyaml cerberus
 
 RUN set -ex \
-    && uv pip install --python /app/bin/python3 -e /roly \
-    && mkdir -p /workspace
+    && uv pip install --python /home/ubuntu/app/bin/python3 -e /home/ubuntu/roly \
+    && mkdir -p /home/ubuntu/workspace
 
-WORKDIR /workspace
-
-COPY ./scripts/entrypoint.sh /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+WORKDIR /home/ubuntu/workspace

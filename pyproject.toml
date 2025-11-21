@@ -53,13 +53,14 @@ ignore = [
     "FBT003", # https://docs.astral.sh/ruff/rules/boolean-positional-value-in-call
     "FIX001", # https://docs.astral.sh/ruff/rules/line-contains-fixme
     "FIX002", # https://docs.astral.sh/ruff/rules/line-contains-todo
+    "PLR0913", # https://docs.astral.sh/ruff/rules/too-many-arguments
     "PLR2004", # https://docs.astral.sh/ruff/rules/magic-value-comparison
     "S603", # https://docs.astral.sh/ruff/rules/subprocess-without-shell-equals-true
     "S604", # Function call with `shell=True` parameter identified
     "S605", #  https://docs.astral.sh/ruff/rules/start-process-with-a-shell
     "S607", # https://docs.astral.sh/ruff/rules/start-process-with-partial-path
     "T201", # https://docs.astral.sh/ruff/rules/print
-    "TD002",
+    "TD002", # https://docs.astral.sh/ruff/rules/missing-todo-author
     "TD003", # https://docs.astral.sh/ruff/rules/missing-todo-link
     "TRY003", # https://docs.astral.sh/ruff/rules/raise-vanilla-args
     # "D205", # https://docs.astral.sh/ruff/rules/blank-line-after-summary

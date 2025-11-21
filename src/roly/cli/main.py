@@ -4,7 +4,8 @@ from typing import Annotated
 
 import typer
 
-from roly.single_runner import run_single_test_cli
+from roly.runner.single_docker import run_single_test_docker_cli
+from roly.runner.single_runner import run_single_test_cli
 
 app = typer.Typer()
 
@@ -31,6 +32,18 @@ def single(
     _init_logging(verbose)
 
     run_single_test_cli(path, extra_roles_path=roles_path, capture_output=capture_output)
+
+
+@app.command()
+def single_docker(
+    path: Path,
+    roles_path: Annotated[list[str] | None, typer.Option(help="Set extra role_path")] = None,
+    verbose: Annotated[bool, typer.Option(help="Show debug log.")] = False,
+    capture_output: Annotated[bool, typer.Option(help="Capture output from ansible-playbook.")] = True,
+) -> None:
+    _init_logging(verbose)
+
+    run_single_test_docker_cli(path, extra_roles_path=roles_path, capture_output=capture_output)
 
 
 def main() -> None:
