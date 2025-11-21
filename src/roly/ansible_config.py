@@ -9,6 +9,7 @@ def make_roly_ansible_config(
     base_dir: Path | None = None,
     python_bin: str | None = None,
     output_path: Path | None = None,
+    extra_roles_path: list[str] | None = None,
 ) -> configparser.ConfigParser:
     base_dir = base_dir or Path(__file__).parent.resolve()
 
@@ -19,6 +20,8 @@ def make_roly_ansible_config(
     }
     if enable_roly_callback:
         default_config["callbacks_enabled"] = "roly_callback"
+    if extra_roles_path:
+        default_config["roles_path"] = ":".join(extra_roles_path)
 
     config = configparser.ConfigParser()
     config["defaults"] = default_config

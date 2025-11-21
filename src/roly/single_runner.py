@@ -47,6 +47,7 @@ def _run_ansible_playbook(
     roly_test_case_path: Path,
     ansible_cfg_path: Path,
     extra_args: list[str] | None = None,
+    capture_output: bool = True,
 ) -> subprocess.CompletedProcess[str]:
     ansible_playbook_bin = _search_ansible_playbook()
     if not ansible_playbook_bin:
@@ -73,17 +74,22 @@ def _run_ansible_playbook(
     )
     logger.debug("Run ansible-playbook command: %s", cmd)
 
-    return subprocess.run(cmd, env=env, cwd=ws_dir, check=False, encoding="utf8", capture_output=True)
+    return subprocess.run(cmd, env=env, cwd=ws_dir, check=False, encoding="utf8", capture_output=capture_output)
 
 
-def run_single_test(test_case_path: Path, extra_args: list[str] | None = None) -> subprocess.CompletedProcess[str]:
+def run_single_test(
+    test_case_path: Path,
+    extra_roles_path: list[str] | None = None,
+    extra_args: list[str] | None = None,
+    capture_output: bool = True,
+) -> subprocess.CompletedProcess[str]:
     raw_test = yaml.safe_load(test_case_path.read_text())[ROLY_TEST_CONFIG_KEY]
     test_case = TestCase.model_validate(raw_test)
 
     with tempfile.TemporaryDirectory() as raw_tmp_dir:
         ws_dir = Path(raw_tmp_dir).resolve()
         ansible_cfg_path = ws_dir / "ansible.cfg"
-        make_roly_ansible_config(output_path=ansible_cfg_path)
+        make_roly_ansible_config(output_path=ansible_cfg_path, extra_roles_path=extra_roles_path)
         logger.debug("Ansible config: %s", ansible_cfg_path.read_text())
 
         if test_case.tasks:
@@ -99,6 +105,7 @@ def run_single_test(test_case_path: Path, extra_args: list[str] | None = None) -
                 roly_test_case_path=test_case_path,
                 ansible_cfg_path=ansible_cfg_path,
                 extra_args=extra_args,
+                capture_output=capture_output,
             )
 
         if test_case.playbooks:
@@ -108,10 +115,15 @@ def run_single_test(test_case_path: Path, extra_args: list[str] | None = None) -
     raise NotImplementedError
 
 
-def run_single_test_cli(test_case_path: Path, show_stdout: bool = True) -> None:
+def run_single_test_cli(
+    test_case_path: Path,
+    show_stdout: bool = True,
+    extra_roles_path: list[str] | None = None,
+    capture_output: bool = True,
+) -> None:
 
-    result = run_single_test(test_case_path)
-    if show_stdout:
+    result = run_single_test(test_case_path, extra_roles_path=extra_roles_path, capture_output=capture_output)
+    if capture_output and show_stdout:
         logger.info("Test case result:")
         print(result.stdout)
         print(result.stderr)

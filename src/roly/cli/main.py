@@ -22,10 +22,15 @@ def list_tests() -> None:
 
 
 @app.command()
-def single(path: Path, verbose: Annotated[bool, typer.Option(help="Show debug log.")] = False) -> None:
+def single(
+    path: Path,
+    roles_path: Annotated[list[str] | None, typer.Option(help="Set extra role_path")] = None,
+    verbose: Annotated[bool, typer.Option(help="Show debug log.")] = False,
+    capture_output: Annotated[bool, typer.Option(help="Capture output from ansible-playbook.")] = True,
+) -> None:
     _init_logging(verbose)
 
-    run_single_test_cli(path)
+    run_single_test_cli(path, extra_roles_path=roles_path, capture_output=capture_output)
 
 
 def main() -> None:
