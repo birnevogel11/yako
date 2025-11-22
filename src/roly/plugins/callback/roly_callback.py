@@ -15,7 +15,7 @@ from ansible.utils.display import Display
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from roly.given import TestTaskConfig  # noqa: TC001
-from roly.test_case import TestCase
+from roly.test_case import TestCaseInputConfig
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -55,7 +55,7 @@ class RolyAnsiblePluginError(Exception):
         sys.exit(exit_code)
 
 
-class RolyTestConfig(TestCase):
+class RolyTestConfig(TestCaseInputConfig):
     model_config = ConfigDict(frozen=True)
 
     ROLY_TEST_CONFIG_KEY: ClassVar[str] = "ROLY_TEST_CASE_CONFIG"

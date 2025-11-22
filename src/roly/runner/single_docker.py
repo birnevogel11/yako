@@ -11,7 +11,7 @@ import yaml
 from roly.ansible_config import make_roly_ansible_config
 from roly.consts import ROLY_TEST_CONFIG_KEY
 from roly.runner.single_runner import _make_content_playbook
-from roly.test_case import TestCase
+from roly.test_case import TestCaseInputConfig
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ def run_single_test_docker(
     image_name: str = "bv11/roly",
 ) -> None:
     raw_test = yaml.safe_load(test_case_path.read_text())[ROLY_TEST_CONFIG_KEY]
-    test_case = TestCase.model_validate(raw_test)
+    test_case = TestCaseInputConfig.model_validate(raw_test)
 
     docker_cmd = [
         "docker",

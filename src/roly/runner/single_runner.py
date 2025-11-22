@@ -12,7 +12,7 @@ import yaml
 
 from roly.ansible_config import make_roly_ansible_config
 from roly.consts import ROLY_TEST_CONFIG_KEY
-from roly.test_case import TestCase
+from roly.test_case import TestCaseInputConfig
 
 if TYPE_CHECKING:
     from typing import Any
@@ -84,7 +84,7 @@ def run_single_test(
     capture_output: bool = True,
 ) -> subprocess.CompletedProcess[str]:
     raw_test = yaml.safe_load(test_case_path.read_text())[ROLY_TEST_CONFIG_KEY]
-    test_case = TestCase.model_validate(raw_test)
+    test_case = TestCaseInputConfig.model_validate(raw_test)
 
     with tempfile.TemporaryDirectory() as raw_tmp_dir:
         ws_dir = Path(raw_tmp_dir).resolve()
