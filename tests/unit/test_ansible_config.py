@@ -36,7 +36,9 @@ interpreter_python = /no-such/python3
         ),
     ],
 )
-def test_make_roly_ansible_config_write_file(tmp_path: Path, enable_roly_callback: bool, expected_config: str) -> None:
+def test_make_roly_ansible_config_write_file(
+    tmp_path: Path, enable_roly_callback: bool, expected_config: str
+) -> None:
     ansible_config_path = tmp_path / "test_ansible.cfg"
 
     make_roly_ansible_config(

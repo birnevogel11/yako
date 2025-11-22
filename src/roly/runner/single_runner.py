@@ -74,7 +74,14 @@ def _run_ansible_playbook(
     )
     logger.debug("Run ansible-playbook command: %s", cmd)
 
-    return subprocess.run(cmd, env=env, cwd=ws_dir, check=False, encoding="utf8", capture_output=capture_output)
+    return subprocess.run(
+        cmd,
+        env=env,
+        cwd=ws_dir,
+        check=False,
+        encoding="utf8",
+        capture_output=capture_output,
+    )
 
 
 def run_single_test(
@@ -89,13 +96,17 @@ def run_single_test(
     with tempfile.TemporaryDirectory() as raw_tmp_dir:
         ws_dir = Path(raw_tmp_dir).resolve()
         ansible_cfg_path = ws_dir / "ansible.cfg"
-        make_roly_ansible_config(output_path=ansible_cfg_path, extra_roles_path=extra_roles_path)
+        make_roly_ansible_config(
+            output_path=ansible_cfg_path, extra_roles_path=extra_roles_path
+        )
         logger.debug("Ansible config: %s", ansible_cfg_path.read_text())
 
         if test_case.tasks:
             # Create a tmp playbook and assign it back
             test_playbook_path = ws_dir / f"{test_case_path.stem}_playbook.yaml"
-            test_playbook_path.write_text(yaml.dump(_make_content_playbook(test_case.tasks)))
+            test_playbook_path.write_text(
+                yaml.dump(_make_content_playbook(test_case.tasks))
+            )
 
             # TODO: replace the test_case with a playbook path and empty content
 
@@ -121,8 +132,9 @@ def run_single_test_cli(
     extra_roles_path: list[str] | None = None,
     capture_output: bool = True,
 ) -> None:
-
-    result = run_single_test(test_case_path, extra_roles_path=extra_roles_path, capture_output=capture_output)
+    result = run_single_test(
+        test_case_path, extra_roles_path=extra_roles_path, capture_output=capture_output
+    )
     if capture_output and show_stdout:
         logger.info("Test case result:")
         print(result.stdout)

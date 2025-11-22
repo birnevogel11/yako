@@ -66,7 +66,13 @@ def test_assert_check_true() -> None:
     ],
 )
 def test_assert_check(actual: Any, expected: Any, mode: str) -> None:
-    assert AssertStmt.model_validate({"actual": actual, "expected": expected, "mode": mode}).check().passed
+    assert (
+        AssertStmt.model_validate(
+            {"actual": actual, "expected": expected, "mode": mode}
+        )
+        .check()
+        .passed
+    )
 
 
 @pytest.mark.parametrize(
@@ -89,6 +95,8 @@ def test_assert_check(actual: Any, expected: Any, mode: str) -> None:
     ],
 )
 def test_assert_check_failed(actual: Any, expected: Any, mode: str, msg: str) -> None:
-    result = AssertStmt.model_validate({"actual": actual, "expected": expected, "mode": mode}).check()
+    result = AssertStmt.model_validate(
+        {"actual": actual, "expected": expected, "mode": mode}
+    ).check()
     assert not result.passed
     assert result.err_msg == msg

@@ -31,7 +31,9 @@ def test_roly_assert_help_function() -> None:
     ],
 )
 def test_roly_assert_equal(actual_value: Any, expected_value: Any) -> None:
-    assert "failed" not in _run_roly_assert_module({"actual": actual_value, "expected": expected_value})
+    assert "failed" not in _run_roly_assert_module(
+        {"actual": actual_value, "expected": expected_value}
+    )
 
 
 @pytest.mark.parametrize(
@@ -110,7 +112,9 @@ fail(s):
     ],
 )
 def test_roly_assert_failed(actual_value: Any, expected_value: Any, msg: str) -> None:
-    result = _run_roly_assert_module({"actual": actual_value, "expected": expected_value}, expected_failed=True)
+    result = _run_roly_assert_module(
+        {"actual": actual_value, "expected": expected_value}, expected_failed=True
+    )
     assert result["msg"] == msg
     assert result["failed"]
 

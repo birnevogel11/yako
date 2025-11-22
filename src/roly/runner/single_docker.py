@@ -85,7 +85,9 @@ def run_single_test_docker(
         if test_case.tasks:
             # Create a tmp playbook and assign it back
             test_playbook_path = ws_dir / f"{test_case_path.stem}_playbook.yaml"
-            test_playbook_path.write_text(yaml.dump(_make_content_playbook(test_case.tasks)))
+            test_playbook_path.write_text(
+                yaml.dump(_make_content_playbook(test_case.tasks))
+            )
 
             # TODO: replace the test_case with a playbook path and empty content
             ansible_playbook_cmd, env = _make_ansible_playbook_cmd(

@@ -56,7 +56,13 @@ class AnsiblePlaybookCommandConfig(BaseModel):
             )
 
         return merge_config.model_copy(
-            update={"extra_args": list(itertools.chain.from_iterable(config.extra_args for config in configs))},
+            update={
+                "extra_args": list(
+                    itertools.chain.from_iterable(
+                        config.extra_args for config in configs
+                    )
+                )
+            },
         )
 
 
@@ -87,10 +93,16 @@ class AnsibleConfig(BaseModel):
         if not configs:
             raise ValueError("Require at least one config")
 
-        roles_path = itertools.chain.from_iterable(config.roles_path for config in configs)
-        playbooks_path = itertools.chain.from_iterable(config.playbooks_path for config in configs)
+        roles_path = itertools.chain.from_iterable(
+            config.roles_path for config in configs
+        )
+        playbooks_path = itertools.chain.from_iterable(
+            config.playbooks_path for config in configs
+        )
         repo_staging = dict(ChainMap(*(config.repo_staging for config in configs)))
-        ansible_playbook = AnsiblePlaybookCommandConfig.from_merge(*(config.ansible_playbook for config in configs))
+        ansible_playbook = AnsiblePlaybookCommandConfig.from_merge(
+            *(config.ansible_playbook for config in configs)
+        )
 
         return cls.model_validate(
             {
@@ -149,13 +161,17 @@ class RolyInputConfig(BaseModel):
     given: TestCaseGiven = TestCaseGiven()
 
     @classmethod
-    def from_path(cls, configs_path: list[Path] | None, base_path: list[Path] | None = None) -> Self:
+    def from_path(
+        cls, configs_path: list[Path] | None, base_path: list[Path] | None = None
+    ) -> Self:
         if not configs_path:
             logger.info("Config path does not exist. Use the default config")
             input_config = cls()
         else:
             logger.debug("Load config from path: %s", configs_path)
-            inputs_config = [cls.model_validate(config_path) for config_path in configs_path]
+            inputs_config = [
+                cls.model_validate(config_path) for config_path in configs_path
+            ]
             # TODO: merge inputs_config
 
         if base_path:
@@ -198,7 +214,9 @@ def _search_config_path(configs_path: list[Path] | None = None) -> list[Path]:
     ]
 
 
-def init_config(configs_path: list[Path] | None, base_path: list[Path] | None = None) -> RolyConfig:
+def init_config(
+    configs_path: list[Path] | None, base_path: list[Path] | None = None
+) -> RolyConfig:
     configs_path = _search_config_path(configs_path)
     input_config = RolyInputConfig.from_path(configs_path, base_path)
 

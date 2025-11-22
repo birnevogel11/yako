@@ -21,7 +21,9 @@ class AssertStmts(BaseModel):
     def check(self) -> tuple[bool, str]:
         results = [stmt.check() for stmt in self.stmts]
         failed_msgs = [result.err_msg or "" for result in results if not result.passed]
-        return bool(not failed_msgs), "fail(s):\n\n" + "\n\n=======\n\n".join(failed_msgs)
+        return bool(not failed_msgs), "fail(s):\n\n" + "\n\n=======\n\n".join(
+            failed_msgs
+        )
 
 
 def run_module():
@@ -33,11 +35,15 @@ def run_module():
 
     match (bool(module.params.get("actual")), bool(module.params.get("stmts"))):
         case (True, False):
-            stmts = AssertStmts.model_validate({"stmts": [AssertStmt.model_validate(module.params)]})
+            stmts = AssertStmts.model_validate(
+                {"stmts": [AssertStmt.model_validate(module.params)]}
+            )
         case (False, True):
             stmts = AssertStmts.model_validate(module.params)
         case _:
-            module.fail_json(msg="Single or multiple assert statements are required", changed=False)
+            module.fail_json(
+                msg="Single or multiple assert statements are required", changed=False
+            )
 
     passed, failed_msg = stmts.check()
     if passed:

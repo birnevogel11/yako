@@ -26,7 +26,9 @@ def list_tests() -> None:
 @app.command(name="test")
 def run_tests(
     base: Annotated[list[Path] | None, typer.Argument(help="test path")] = None,
-    config: Annotated[list[Path] | None, typer.Option("-c", "--config", help="config path")] = None,
+    config: Annotated[
+        list[Path] | None, typer.Option("-c", "--config", help="config path")
+    ] = None,
     verbose: Annotated[bool, typer.Option(help="Show debug log.")] = False,
 ) -> None:
     _init_logging(verbose)
@@ -37,25 +39,37 @@ def run_tests(
 @app.command()
 def single(
     path: Path,
-    roles_path: Annotated[list[str] | None, typer.Option(help="Set extra role_path")] = None,
+    roles_path: Annotated[
+        list[str] | None, typer.Option(help="Set extra role_path")
+    ] = None,
     verbose: Annotated[bool, typer.Option(help="Show debug log.")] = False,
-    capture_output: Annotated[bool, typer.Option(help="Capture output from ansible-playbook.")] = True,
+    capture_output: Annotated[
+        bool, typer.Option(help="Capture output from ansible-playbook.")
+    ] = True,
 ) -> None:
     _init_logging(verbose)
 
-    run_single_test_cli(path, extra_roles_path=roles_path, capture_output=capture_output)
+    run_single_test_cli(
+        path, extra_roles_path=roles_path, capture_output=capture_output
+    )
 
 
 @app.command()
 def single_docker(
     path: Path,
-    roles_path: Annotated[list[str] | None, typer.Option(help="Set extra role_path")] = None,
+    roles_path: Annotated[
+        list[str] | None, typer.Option(help="Set extra role_path")
+    ] = None,
     verbose: Annotated[bool, typer.Option(help="Show debug log.")] = False,
-    capture_output: Annotated[bool, typer.Option(help="Capture output from ansible-playbook.")] = True,
+    capture_output: Annotated[
+        bool, typer.Option(help="Capture output from ansible-playbook.")
+    ] = True,
 ) -> None:
     _init_logging(verbose)
 
-    run_single_test_docker_cli(path, extra_roles_path=roles_path, capture_output=capture_output)
+    run_single_test_docker_cli(
+        path, extra_roles_path=roles_path, capture_output=capture_output
+    )
 
 
 def main() -> None:

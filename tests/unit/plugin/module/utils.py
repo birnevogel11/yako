@@ -30,12 +30,16 @@ def run_ansible_module(
     """Help to run the roly_assert module with optional module args."""
     module_args = module_args or {}
 
-    context = pytest.raises(MockSysExitError) if expected_failed else contextlib.nullcontext()
+    context = (
+        pytest.raises(MockSysExitError) if expected_failed else contextlib.nullcontext()
+    )
     with (
         context,
         patch_module_args(module_args),
         patch("sys.exit", side_effect=_mock_sys_exit),
-        patch("ansible.module_utils.basic.AnsibleModule._record_module_result") as return_mock,
+        patch(
+            "ansible.module_utils.basic.AnsibleModule._record_module_result"
+        ) as return_mock,
     ):
         run_module()
 

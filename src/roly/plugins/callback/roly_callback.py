@@ -36,7 +36,9 @@ def _display_message_ok(msg: str, color=C.COLOR_OK) -> None:
     global_display.display(msg=f"[ROLY]: {msg}", color=color)
 
 
-def _get_task_playbook_vars(host: Host, task: Task, extra_vars: dict[str, Any] | None = None) -> Any:
+def _get_task_playbook_vars(
+    host: Host, task: Task, extra_vars: dict[str, Any] | None = None
+) -> Any:
     variables = {}
     variables.update(task.play.get_variable_manager().get_vars(host=host, task=task))
     variables.update(task.play.vars)
@@ -72,7 +74,9 @@ class RolyTestConfig(TestCaseInputConfig):
         # Variables placed into the config need to be instantiated with extra vars
         templar = Templar(loader=DataLoader(), variables=play_extra_vars_base)
         try:
-            render_raw_test_config = {key: value for key, value in raw_test_config.items() if key != "tasks"}
+            render_raw_test_config = {
+                key: value for key, value in raw_test_config.items() if key != "tasks"
+            }
             render_raw_test_config = templar.template(render_raw_test_config)
             raw_test_config.update(render_raw_test_config)
         except Exception as err:  # noqa: BLE001
@@ -97,7 +101,13 @@ class SimpleVariableTemplar:
 
 
 class VariableTemplar:
-    def __init__(self, host: Host, task: Task, task_config: TestTaskConfig, config: RolyTestConfig) -> None:
+    def __init__(
+        self,
+        host: Host,
+        task: Task,
+        task_config: TestTaskConfig,
+        config: RolyTestConfig,
+    ) -> None:
         self._host = host
         self._task = task
         self._task_config = task_config
@@ -109,11 +119,15 @@ class VariableTemplar:
     def template_task(self, raw: Any) -> Any:
         return self._playbook_task_templar.template_task(raw)
 
-    def generate_task_loop_templar(self, loop_vars: dict[str, Any]) -> SimpleVariableTemplar:
+    def generate_task_loop_templar(
+        self, loop_vars: dict[str, Any]
+    ) -> SimpleVariableTemplar:
         return SimpleVariableTemplar((self._playbook_vars, loop_vars))
 
     def generate_task_with_extra_var_templar(self) -> SimpleVariableTemplar:
-        return SimpleVariableTemplar((self._playbook_vars, self.template_task(self._task_config.extra_vars)))
+        return SimpleVariableTemplar(
+            (self._playbook_vars, self.template_task(self._task_config.extra_vars))
+        )
 
 
 class RolyInternalState(BaseModel):
@@ -128,9 +142,13 @@ class RolyInternalState(BaseModel):
 
         Caution: It changes the `task` argument in place.
         """
-        self.task_config, new_task_name, new_task_ignore_errors = self._find_task_config(host, task)
+        self.task_config, new_task_name, new_task_ignore_errors = (
+            self._find_task_config(host, task)
+        )
         self.var_templar = (
-            VariableTemplar(host, task, self.task_config, self.test_config) if self.task_config else None
+            VariableTemplar(host, task, self.task_config, self.test_config)
+            if self.task_config
+            else None
         )
 
         # Change task name and ignore error state
@@ -138,10 +156,14 @@ class RolyInternalState(BaseModel):
         task._task_name = new_task_name  # noqa: SLF001
         task.ignore_errors = new_task_ignore_errors
 
-    def _find_task_config(self, host: Host, task: Task) -> tuple[TestTaskConfig | None, str, bool]:
+    def _find_task_config(
+        self, host: Host, task: Task
+    ) -> tuple[TestTaskConfig | None, str, bool]:
         task_var_expander = Templar(
             loader=DataLoader(),
-            variables=_get_task_playbook_vars(host, task, self.test_config.given.extra_vars),
+            variables=_get_task_playbook_vars(
+                host, task, self.test_config.given.extra_vars
+            ),
         )
 
         new_task_name = task_var_expander.template(task.name)
@@ -168,7 +190,9 @@ def _mock_task(task: Task, task_config: TestTaskConfig) -> None:
         return
 
     original_action_name = task.action
-    new_action_name, new_action_name_args = task_config.mock.gen_action(original_action_name)
+    new_action_name, new_action_name_args = task_config.mock.gen_action(
+        original_action_name
+    )
     _display_message_ok(
         f"mock module - Before: '{original_action_name}' Now: '{new_action_name}' with custom action",
     )
@@ -193,7 +217,9 @@ def _get_task_args(task_args: dict[str, Any], name: str) -> Any:
 
 
 def _assert_inputs_loop(task: Task, roly_state: RolyInternalState) -> None:
-    if not (task_config := roly_state.task_config) or not (var_templar := roly_state.var_templar):
+    if not (task_config := roly_state.task_config) or not (
+        var_templar := roly_state.var_templar
+    ):
         return
 
     for loop_value in task.loop:
@@ -212,7 +238,9 @@ def _assert_inputs_loop(task: Task, roly_state: RolyInternalState) -> None:
 
 
 def _assert_inputs_normal(task: Task, roly_state: RolyInternalState) -> None:
-    if not (task_config := roly_state.task_config) or not (var_templar := roly_state.var_templar):
+    if not (task_config := roly_state.task_config) or not (
+        var_templar := roly_state.var_templar
+    ):
         return
 
     task_args = var_templar.template_task(task.args)
@@ -248,7 +276,9 @@ def _report_assert(
     if passed_asserts and not failed_asserts:
         _display_message_ok(f"Pass for assert {state}. task: {task_name}")
     if failed_asserts:
-        failed_msgs = "\n".join(msg or "" for result in failed_asserts if (msg := result.err_msg or ""))
+        failed_msgs = "\n".join(
+            msg or "" for result in failed_asserts if (msg := result.err_msg or "")
+        )
         msg = f"Failed to assert {state}. task: {task_name}, failed_asserts: {failed_msgs}"
         raise RolyAnsiblePluginError(msg)
 
@@ -271,12 +301,22 @@ def _assert_task_state(
         expected_state = getattr(task_config, var_name, None)
         if expected_state is not None and actual_state is not None:
             if expected_state != actual_state:
-                err_msgs.append(f"Task {var_name} state error. actual: {actual_state}, expected: {expected_state}")
+                err_msgs.append(
+                    f"Task {var_name} state error. actual: {actual_state}, expected: {expected_state}"
+                )
             else:
-                _display_message_ok(f"{var_name} state check ok. expected_state: {expected_state}")
+                _display_message_ok(
+                    f"{var_name} state check ok. expected_state: {expected_state}"
+                )
 
-    if task_config.should_fail and task_config.should_fail == should_fail and rescue_fail:
-        raise RolyAnsiblePluginError("Task failed as expected. Stop here with exit code 0", exit_code=0)
+    if (
+        task_config.should_fail
+        and task_config.should_fail == should_fail
+        and rescue_fail
+    ):
+        raise RolyAnsiblePluginError(
+            "Task failed as expected. Stop here with exit code 0", exit_code=0
+        )
 
     if err_msgs:
         msg = "Check task state error: " + "\n".join(err_msgs)
@@ -298,7 +338,9 @@ class CallbackModule(CallbackBase):
         play_extra_vars.update(test_config.given.extra_vars)
 
         self._roly = RolyInternalState(test_config=test_config)
-        _display_message_ok(f"Start Roly with test case - {self._roly.test_config.name}")
+        _display_message_ok(
+            f"Start Roly with test case - {self._roly.test_config.name}"
+        )
 
         return play
 
@@ -308,13 +350,19 @@ class CallbackModule(CallbackBase):
         self._roly.assign_current_task_config(host, task)
         _display_message_ok(f"{self._roly.task_config}")
 
-        if (task_config := self._roly.task_config) and (var_templar := self._roly.var_templar):
+        if (task_config := self._roly.task_config) and (
+            var_templar := self._roly.var_templar
+        ):
             # Apply extra variables in task level. The mechanism does not apply to the case
             #   - name: "Example task"
             #     set_fact:
             #       another: "{{ task_extra_vars }}"  # noqa: ERA001
             with contextlib.suppress(AnsibleUndefinedVariable):
-                task.args = var_templar.generate_task_with_extra_var_templar().template_task(task.args)
+                task.args = (
+                    var_templar.generate_task_with_extra_var_templar().template_task(
+                        task.args
+                    )
+                )
                 print(task.args)
 
             # Check inputs
@@ -345,7 +393,9 @@ class CallbackModule(CallbackBase):
         self._display.debug("Run v2_runner_on_failed")
 
         if task_config := self._roly.task_config:
-            _assert_task_state(task_config, should_be_skipped=False, should_fail=True, rescue_fail=True)
+            _assert_task_state(
+                task_config, should_be_skipped=False, should_fail=True, rescue_fail=True
+            )
 
     def v2_runner_on_skipped(self, result: CallbackTaskResult, **kwargs) -> None:
         self._display.debug("Run v2_runner_on_skipped")
