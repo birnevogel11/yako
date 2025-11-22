@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 import yaml
-
 from roly.single_runner import run_single_test
 
 TEST_PLAYBOOK_BASE_DIR = (Path(__file__).parent / "test_callback_plugin").resolve()

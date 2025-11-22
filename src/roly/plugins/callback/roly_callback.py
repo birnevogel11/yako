@@ -194,7 +194,10 @@ def _mock_task(task: Task, task_config: TestTaskConfig) -> None:
         original_action_name
     )
     _display_message_ok(
-        f"mock module - Before: '{original_action_name}' Now: '{new_action_name}' with custom action",
+        (
+            f"mock module - Before: '{original_action_name}' "
+            f"Now: '{new_action_name}' with custom action"
+        ),
     )
 
     task.action = new_action_name
@@ -279,7 +282,10 @@ def _report_assert(
         failed_msgs = "\n".join(
             msg or "" for result in failed_asserts if (msg := result.err_msg or "")
         )
-        msg = f"Failed to assert {state}. task: {task_name}, failed_asserts: {failed_msgs}"
+        msg = (
+            f"Failed to assert {state}. task: {task_name}, "
+            f"failed_asserts: {failed_msgs}"
+        )
         raise RolyAnsiblePluginError(msg)
 
 
@@ -302,7 +308,8 @@ def _assert_task_state(
         if expected_state is not None and actual_state is not None:
             if expected_state != actual_state:
                 err_msgs.append(
-                    f"Task {var_name} state error. actual: {actual_state}, expected: {expected_state}"
+                    f"Task {var_name} state error. actual: {actual_state}, "
+                    f"expected: {expected_state}"
                 )
             else:
                 _display_message_ok(
@@ -345,15 +352,18 @@ class CallbackModule(CallbackBase):
         return play
 
     def v2_runner_on_start(self, host: Host, task: Task) -> None:
-        _display_message_ok(f"Runner start: {task}, on host {host}, name: {task.name}")
-
         self._roly.assign_current_task_config(host, task)
-        _display_message_ok(f"{self._roly.task_config}")
 
         if (task_config := self._roly.task_config) and (
             var_templar := self._roly.var_templar
         ):
-            # Apply extra variables in task level. The mechanism does not apply to the case
+            _display_message_ok(
+                f"Runner start: {task}, on host {host}, name: {task.name}"
+            )
+            _display_message_ok(f"{self._roly.task_config}")
+
+            # Apply extra variables in task level. The mechanism does not
+            # apply to the case
             #   - name: "Example task"
             #     set_fact:
             #       another: "{{ task_extra_vars }}"  # noqa: ERA001

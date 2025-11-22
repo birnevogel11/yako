@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import itertools
+from collections import ChainMap
 from typing import TYPE_CHECKING, Annotated, Any
 
 import ansible
@@ -9,6 +11,7 @@ from roly.assert_check import AssertMode, AssertResult, AssertStmt, FileMode
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from typing import Self
 
 
 class MockActionConfig(BaseModel):
@@ -128,3 +131,15 @@ class TestCaseGiven(BaseModel):
     files: dict[str, str] = {}
     extra_vars: dict[str, Any] = {}
     mock_tasks: list[TestTaskConfig] = []
+
+    @classmethod
+    def from_merge(cls, *givens: Self) -> Self:
+        return cls.model_validate(
+            {
+                "files": dict(ChainMap(*(given.files for given in givens))),
+                "extra_vars": dict(ChainMap(*(given.extra_vars for given in givens))),
+                "mock_tasks": list(
+                    itertools.chain.from_iterable(given.mock_tasks for given in givens),
+                ),
+            }
+        )

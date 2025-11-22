@@ -6,17 +6,38 @@ import os
 from collections import ChainMap
 from enum import Enum
 from pathlib import Path
-from typing import NewType, Self
+from typing import TYPE_CHECKING, NewType, Self
 
+import yaml
 from pydantic import BaseModel, ConfigDict
 
 from roly.consts import ROLY_CONFIG_PATH_ENV_NAME, ROLY_LOCAL_CONFIG_PATH_ENV_NAME
 from roly.test_case import TestCaseGiven
 
+if TYPE_CHECKING:
+    from typing import Any
+
 logger = logging.getLogger(__name__)
 
 
 Repo = NewType("Repo", str)
+
+
+def _merge_raw_configs(*raw_configs: dict[str, Any]) -> dict[str, Any]:
+    if not raw_configs:
+        return {}
+
+    base_config = raw_configs[0]
+    for config in raw_configs[1:]:
+        for key, value in config.items():
+            if isinstance(value, list):
+                base_config[key].extend(value)
+            elif isinstance(value, dict):
+                base_config[key] = _merge_raw_configs(base_config[key], value)
+            else:
+                base_config[key] = value
+
+    return base_config
 
 
 class RunnerMode(Enum):
@@ -93,35 +114,33 @@ class AnsibleConfig(BaseModel):
         if not configs:
             raise ValueError("Require at least one config")
 
-        roles_path = itertools.chain.from_iterable(
-            config.roles_path for config in configs
+        roles_path = list(
+            itertools.chain.from_iterable(config.roles_path for config in configs)
         )
-        playbooks_path = itertools.chain.from_iterable(
-            config.playbooks_path for config in configs
+        playbooks_path = list(
+            itertools.chain.from_iterable(config.playbooks_path for config in configs)
         )
         repo_staging = dict(ChainMap(*(config.repo_staging for config in configs)))
         ansible_playbook = AnsiblePlaybookCommandConfig.from_merge(
             *(config.ansible_playbook for config in configs)
         )
 
-        return cls.model_validate(
-            {
-                "roles_paths": list(roles_path),
-                "playbooks_path": list(playbooks_path),
-                "repo_staging": repo_staging,
-                "ansible_playbook": ansible_playbook,
-            },
+        return cls(
+            roles_path=roles_path,
+            playbooks_path=playbooks_path,
+            repo_staging=repo_staging,
+            ansible_playbook=ansible_playbook,
         )
 
 
-class LocalRunnerConfig:
+class LocalRunnerConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
 
 class LocalRunnerInputConfig(LocalRunnerConfig):
     model_config = ConfigDict(frozen=True)
 
-    ansible_playbook: AnsiblePlaybookCommandConfig = AnsiblePlaybookCommandConfig()
+    ansible: AnsibleConfig = AnsibleConfig()
 
 
 class DockerRunnerConfig(BaseModel):
@@ -136,21 +155,38 @@ class DockerRunnerConfig(BaseModel):
 class DockerRunnerInputConfig(DockerRunnerConfig):
     model_config = ConfigDict(frozen=True)
 
-    ansible_playbook: AnsiblePlaybookCommandConfig = AnsiblePlaybookCommandConfig()
+    ansible: AnsibleConfig = AnsibleConfig()
 
 
 class RunnerInputConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    local: LocalRunnerInputConfig | None = None
-    docker: DockerRunnerInputConfig | None = None
+    local: LocalRunnerInputConfig = LocalRunnerInputConfig()
+    docker: DockerRunnerInputConfig = DockerRunnerInputConfig()
 
 
 class RunnerConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    local: LocalRunnerConfig | None = None
-    docker: DockerRunnerConfig | None = None
+    local: LocalRunnerConfig = LocalRunnerConfig()
+    docker: DockerRunnerConfig = DockerRunnerConfig()
+
+    @classmethod
+    def from_input_config(cls, config: RunnerInputConfig) -> Self:
+        return cls.model_validate(
+            {
+                "local": {
+                    key: value
+                    for key, value in config.local.model_dump().items()
+                    if key != "ansible"
+                },
+                "docker": {
+                    key: value
+                    for key, value in config.docker.model_dump().items()
+                    if key != "ansible"
+                },
+            }
+        )
 
 
 class RolyInputConfig(BaseModel):
@@ -169,19 +205,17 @@ class RolyInputConfig(BaseModel):
             input_config = cls()
         else:
             logger.debug("Load config from path: %s", configs_path)
-            inputs_config = [
-                cls.model_validate(config_path) for config_path in configs_path
-            ]
-            # TODO: merge inputs_config
+
+            input_config = cls.model_validate(
+                _merge_raw_configs(
+                    *[yaml.safe_load(config_path) for config_path in configs_path]
+                )
+            )
 
         if base_path:
             input_config = input_config.model_copy(update={"base_dir": base_path})
 
         return input_config
-
-    @classmethod
-    def from_merge(cls, *configs: Self) -> Self:
-        raise NotImplementedError
 
 
 class RolyConfig(BaseModel):
@@ -189,6 +223,28 @@ class RolyConfig(BaseModel):
     runner_mode: RunnerMode = RunnerMode.Docker
     ansible: AnsibleConfig = AnsibleConfig()
     runner: RunnerConfig = RunnerConfig()
+    given: TestCaseGiven = TestCaseGiven()
+
+    @classmethod
+    def from_input_config(cls, input_config: RolyInputConfig) -> Self:
+        runner_mode = input_config.runner_mode
+
+        match runner_mode:
+            case RunnerMode.Docker:
+                ansible_runner_config = input_config.runner.docker.ansible
+            case RunnerMode.Local:
+                ansible_runner_config = input_config.runner.local.ansible
+        ansible = AnsibleConfig.from_merge(input_config.ansible, ansible_runner_config)
+
+        runner = RunnerConfig.from_input_config(input_config.runner)
+
+        return cls(
+            base_dir=input_config.base_dir,
+            runner_mode=input_config.runner_mode,
+            ansible=ansible,
+            runner=runner,
+            given=input_config.given,
+        )
 
 
 def _list_config_path(env_name: str, default_filename: str) -> Path | None:
@@ -219,5 +275,4 @@ def init_config(
 ) -> RolyConfig:
     configs_path = _search_config_path(configs_path)
     input_config = RolyInputConfig.from_path(configs_path, base_path)
-
-    raise NotImplementedError
+    return RolyConfig.from_input_config(input_config)
