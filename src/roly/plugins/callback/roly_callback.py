@@ -15,7 +15,7 @@ from ansible.utils.display import Display
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from roly.given import TestTaskConfig  # noqa: TC001
-from roly.test_case import TestCaseInputConfig
+from roly.test_case import TestCase
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -57,7 +57,7 @@ class RolyAnsiblePluginError(Exception):
         sys.exit(exit_code)
 
 
-class RolyTestConfig(TestCaseInputConfig):
+class RolyTestConfig(TestCase):
     model_config = ConfigDict(frozen=True)
 
     ROLY_TEST_CONFIG_KEY: ClassVar[str] = "ROLY_TEST_CASE_CONFIG"
@@ -341,7 +341,9 @@ class CallbackModule(CallbackBase):
         try:
             test_config = RolyTestConfig.from_playbook(play_extra_vars)
         except ValidationError as err:
-            raise RolyAnsiblePluginError("Invalid Roly test case config") from err
+            msg = f"Invalid Roly test case config. err: {err.errors()}"
+            raise RolyAnsiblePluginError(msg)  # noqa: B904
+
         play_extra_vars.update(test_config.given.extra_vars)
 
         self._roly = RolyInternalState(test_config=test_config)

@@ -105,7 +105,6 @@ class AnsibleConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     roles_path: list[Path | RepoRoleConfig] = []
-    playbooks_path: list[Path | RepoPlaybookConfig] = []
     repo_staging: dict[Repo, Path] = {}
     ansible_playbook: AnsiblePlaybookCommandConfig = AnsiblePlaybookCommandConfig()
 
@@ -117,9 +116,6 @@ class AnsibleConfig(BaseModel):
         roles_path = list(
             itertools.chain.from_iterable(config.roles_path for config in configs)
         )
-        playbooks_path = list(
-            itertools.chain.from_iterable(config.playbooks_path for config in configs)
-        )
         repo_staging = dict(ChainMap(*(config.repo_staging for config in configs)))
         ansible_playbook = AnsiblePlaybookCommandConfig.from_merge(
             *(config.ansible_playbook for config in configs)
@@ -127,10 +123,23 @@ class AnsibleConfig(BaseModel):
 
         return cls(
             roles_path=roles_path,
-            playbooks_path=playbooks_path,
             repo_staging=repo_staging,
             ansible_playbook=ansible_playbook,
         )
+
+    def expand_roles_path(self) -> list[Path]:
+        paths = []
+        for role_path in self.roles_path:
+            match role_path:
+                case Path():
+                    path = role_path.resolve()
+                case RepoRoleConfig():
+                    # TODO: implement it
+                    raise NotImplementedError
+
+            paths.append(path)
+
+        return paths
 
 
 class LocalRunnerConfig(BaseModel):

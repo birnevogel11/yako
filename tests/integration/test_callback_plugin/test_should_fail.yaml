@@ -5,6 +5,7 @@ ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
 
 ROLY_TEST_CASE_CONFIG:
   name: "test_should_fail"
+  path: "fake"
   given:
     mock_tasks:
       - name: Mock target

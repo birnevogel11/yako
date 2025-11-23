@@ -3,6 +3,7 @@ ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
 
 ROLY_TEST_CASE_CONFIG:
   name: "test_mock_basic"
+  path: "fake"
   given:
     mock_tasks:
       - name: Create a temp folder

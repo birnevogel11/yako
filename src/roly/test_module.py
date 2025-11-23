@@ -39,10 +39,12 @@ class TestModule(BaseModel):
     def from_input_config(
         cls, config: RolyConfig, module_config: TestModuleInputConfig
     ) -> Self:
-        test_cases = [
-            TestCase.from_config(config, module_config, test_case)
-            for test_case in module_config.test_cases
-        ]
+        test_cases = list(
+            itertools.chain.from_iterable(
+                TestCase.from_config(config, module_config, test_case)
+                for test_case in module_config.test_cases
+            )
+        )
         return cls(
             path=module_config.path, given=module_config.given, test_cases=test_cases
         )
@@ -103,8 +105,7 @@ def _list_test_module_input_configs(config: RolyConfig) -> list[TestModuleInputC
 
 
 def list_test_modules(config: RolyConfig) -> list[TestModule]:
-    module_configs = _list_test_module_input_configs(config)
     return [
         TestModule.from_input_config(config, module_config)
-        for module_config in module_configs
+        for module_config in _list_test_module_input_configs(config)
     ]
