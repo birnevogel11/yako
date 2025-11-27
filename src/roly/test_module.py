@@ -41,7 +41,7 @@ class TestModule(BaseModel):
     ) -> Self:
         test_cases = list(
             itertools.chain.from_iterable(
-                TestCase.from_config(config, module_config, test_case)
+                TestCase.from_input_config(config, module_config, test_case)
                 for test_case in module_config.test_cases
             )
         )

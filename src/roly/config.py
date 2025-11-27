@@ -6,38 +6,24 @@ import os
 from collections import ChainMap
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, NewType, Self
+from typing import Self
 
 import yaml
-from pydantic import BaseModel, ConfigDict
+from pydantic import AnyUrl, BaseModel, ConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+    YamlConfigSettingsSource,
+)
 
-from roly.consts import ROLY_CONFIG_PATH_ENV_NAME, ROLY_LOCAL_CONFIG_PATH_ENV_NAME
+from roly.consts import ROLY_CONFIG_PATH_ENV_NAME
 from roly.test_case import TestCaseGiven
-
-if TYPE_CHECKING:
-    from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-Repo = NewType("Repo", str)
-
-
-def _merge_raw_configs(*raw_configs: dict[str, Any]) -> dict[str, Any]:
-    if not raw_configs:
-        return {}
-
-    base_config = raw_configs[0]
-    for config in raw_configs[1:]:
-        for key, value in config.items():
-            if isinstance(value, list):
-                base_config[key].extend(value)
-            elif isinstance(value, dict):
-                base_config[key] = _merge_raw_configs(base_config[key], value)
-            else:
-                base_config[key] = value
-
-    return base_config
+type Repo = AnyUrl
 
 
 class RunnerMode(Enum):
@@ -158,7 +144,10 @@ class DockerRunnerConfig(BaseModel):
     image_name: str = ""  # TODO: fill roly by default
     # dockerfile: Path = ""  # TODO: Should we support it?  # noqa: ERA001
     workspace_dir: Path = Path("/home/ubuntu/workspace")
+    roly_venv_dir: Path = Path("/home/ubuntu/app")
     extra_args: list[str] = []
+
+    host_roly_src_dir: Path | None = None
 
 
 class DockerRunnerInputConfig(DockerRunnerConfig):
@@ -198,7 +187,13 @@ class RunnerConfig(BaseModel):
         )
 
 
-class RolyInputConfig(BaseModel):
+class RolyInputConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=[".env"],
+        env_file_encoding="utf-8",
+        yaml_file=["roly.yaml", "roly_local.yaml"],
+    )
+
     base_dir: list[Path] = [Path("test/roly")]
     runner_mode: RunnerMode = RunnerMode.Docker
     ansible: AnsibleConfig = AnsibleConfig()
@@ -206,25 +201,21 @@ class RolyInputConfig(BaseModel):
     given: TestCaseGiven = TestCaseGiven()
 
     @classmethod
-    def from_path(
-        cls, configs_path: list[Path] | None, base_path: list[Path] | None = None
-    ) -> Self:
-        if not configs_path:
-            logger.info("Config path does not exist. Use the default config")
-            input_config = cls()
-        else:
-            logger.debug("Load config from path: %s", configs_path)
-
-            input_config = cls.model_validate(
-                _merge_raw_configs(
-                    *[yaml.safe_load(config_path) for config_path in configs_path]
-                )
-            )
-
-        if base_path:
-            input_config = input_config.model_copy(update={"base_dir": base_path})
-
-        return input_config
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        return (
+            init_settings,
+            YamlConfigSettingsSource(settings_cls),
+            env_settings,
+            dotenv_settings,
+            file_secret_settings,
+        )
 
 
 class RolyConfig(BaseModel):
@@ -256,32 +247,26 @@ class RolyConfig(BaseModel):
         )
 
 
-def _list_config_path(env_name: str, default_filename: str) -> Path | None:
-    if raw_path := os.environ.get(env_name):
-        return Path(raw_path)
-    if (path := Path.cwd() / default_filename).exists():
-        return path
+def _init_input_config(
+    base_path: list[Path] | None = None, config_path: Path | None = None
+) -> RolyInputConfig:
+    if config_path:
+        path = config_path
+    elif raw_path := os.environ.get(ROLY_CONFIG_PATH_ENV_NAME):
+        path = Path(raw_path).expanduser().resolve()
 
-    return None
+    input_config = (
+        RolyInputConfig.model_validate(yaml.safe_load(path.read_text()))
+        if path
+        else RolyInputConfig()
+    )
+    if base_path:
+        input_config = input_config.model_copy(update={"base_dir": base_path})
 
-
-def _search_config_path(configs_path: list[Path] | None = None) -> list[Path]:
-    if configs_path:
-        return configs_path
-
-    return [
-        path
-        for env_name, default_filename in (
-            (ROLY_CONFIG_PATH_ENV_NAME, "roly.yaml"),
-            (ROLY_LOCAL_CONFIG_PATH_ENV_NAME, "roly_local.yaml"),
-        )
-        if (path := _list_config_path(env_name, default_filename))
-    ]
+    return input_config
 
 
 def init_config(
-    configs_path: list[Path] | None, base_path: list[Path] | None = None
+    base_path: list[Path] | None = None, config_path: Path | None = None
 ) -> RolyConfig:
-    configs_path = _search_config_path(configs_path)
-    input_config = RolyInputConfig.from_path(configs_path, base_path)
-    return RolyConfig.from_input_config(input_config)
+    return RolyConfig.from_input_config(_init_input_config(base_path, config_path))

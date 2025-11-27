@@ -25,7 +25,7 @@ def list_tests() -> None:
 def run_tests(
     base: Annotated[list[Path] | None, typer.Argument(help="test path")] = None,
     config: Annotated[
-        list[Path] | None, typer.Option("-c", "--config", help="config path")
+        Path | None, typer.Option("-c", "--config", help="config path")
     ] = None,
     verbose: Annotated[bool, typer.Option(help="Show debug log.")] = False,
 ) -> None:

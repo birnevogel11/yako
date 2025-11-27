@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -13,6 +14,8 @@ if TYPE_CHECKING:
 
     from roly.config import RolyConfig
     from roly.test_module import TestModuleInputConfig
+
+logger = logging.getLogger(__name__)
 
 
 def _create_test_case_display_name(
@@ -28,11 +31,36 @@ def _create_test_case_display_name(
         if model_path.is_absolute() and model_path.is_relative_to(base_dir)
         else model_path
     )
-    return (
-        f"{path}::{test_case_name}[{parametrize_name}]"
-        if parametrize_name
-        else f"{path}::{test_case_name}"
-    )
+
+    name = f"{path}::{test_case_name}"
+    if parametrize_name:
+        name = f"{name}[{parametrize_name}]"
+
+    return name
+
+
+def _resolve_playbooks_path(
+    test_module_path: Path, playbooks_path: list[str], base_dir: Path | None = None
+) -> list[Path]:
+    base_dir_order = [
+        test_module_path.resolve().parent,
+        (base_dir or Path.cwd()).resolve(),
+    ]
+
+    resolved_paths = []
+    for name in playbooks_path:
+        resolved_path = next((base / name for base in base_dir_order), None)
+        if not resolved_path:
+            logger.error(
+                "Can not resolve the playbook path. test_module_path: %s, "
+                "playbook_path: %s",
+                test_module_path,
+                name,
+            )
+        else:
+            resolved_paths.append(resolved_path)
+
+    return resolved_paths
 
 
 @not_test
@@ -66,11 +94,11 @@ class TestCase(BaseModel):
     parametrized_name: str = ""
     display_name: str = ""
     given: TestCaseGiven = TestCaseGiven()
-    playbooks: list[str] = []
+    playbooks: list[Path] = []
     tasks: list[dict[str, Any]] = []
 
     @classmethod
-    def from_config(
+    def from_input_config(
         cls,
         config: RolyConfig,
         module_config: TestModuleInputConfig,
@@ -100,8 +128,26 @@ class TestCase(BaseModel):
                     module_config.path, case_config.name, p_name
                 ),
                 given=given,
-                playbooks=case_config.playbooks,
+                playbooks=_resolve_playbooks_path(
+                    module_config.path, case_config.playbooks
+                ),
                 tasks=case_config.tasks,
             )
             for p_name, given in givens.items()
         ]
+
+    @model_validator(mode="after")  # type: ignore[misc]
+    def validate_content(self) -> Self:
+        if not self.playbooks and not self.tasks:
+            msg = f"Test case require playbooks or tasks. name: {self.name}"
+            raise ValueError(msg)
+
+        if self.playbooks and self.tasks:
+            msg = f"Test case can only provide playbooks or tasks. name: {self.name}"
+            raise ValueError(msg)
+
+        if not self.playbooks and not self.tasks:
+            msg = f"Test case must contains playbooks or tasks. name: {self.name}"
+            raise ValueError(msg)
+
+        return self
