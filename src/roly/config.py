@@ -253,10 +253,12 @@ def _init_input_config(
     if config_path:
         path = config_path
     elif raw_path := os.environ.get(ROLY_CONFIG_PATH_ENV_NAME):
-        path = Path(raw_path).expanduser().resolve()
+        path = Path(raw_path)
 
     input_config = (
-        RolyInputConfig.model_validate(yaml.safe_load(path.read_text()))
+        RolyInputConfig.model_validate(
+            yaml.safe_load(path.expanduser().resolve().read_text())
+        )
         if path
         else RolyInputConfig()
     )

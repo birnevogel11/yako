@@ -63,6 +63,20 @@ def _resolve_playbooks_path(
     return resolved_paths
 
 
+def _validate_tasks_and_playbooks(test_case: TestCaseInputConfig | TestCase) -> None:
+    if not test_case.playbooks and not test_case.tasks:
+        msg = f"Test case require playbooks or tasks. name: {test_case.name}"
+        raise ValueError(msg)
+
+    if test_case.playbooks and test_case.tasks:
+        msg = f"Test case can only provide playbooks or tasks. name: {test_case.name}"
+        raise ValueError(msg)
+
+    if not test_case.playbooks and not test_case.tasks:
+        msg = f"Test case must contains playbooks or tasks. name: {test_case.name}"
+        raise ValueError(msg)
+
+
 @not_test
 class TestCaseInputConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -75,13 +89,7 @@ class TestCaseInputConfig(BaseModel):
 
     @model_validator(mode="after")  # type: ignore[misc]
     def validate_content(self) -> Self:
-        if not self.playbooks and not self.tasks:
-            msg = f"Test case require playbooks or tasks. name: {self.name}"
-            raise ValueError(msg)
-
-        if self.playbooks and self.tasks:
-            msg = f"Test case can only provide playbooks or tasks. name: {self.name}"
-            raise ValueError(msg)
+        _validate_tasks_and_playbooks(self)
 
         return self
 
@@ -124,9 +132,6 @@ class TestCase(BaseModel):
                 name=case_config.name,
                 path=module_config.path,
                 parametrized_name=p_name,
-                display_name=_create_test_case_display_name(
-                    module_config.path, case_config.name, p_name
-                ),
                 given=given,
                 playbooks=_resolve_playbooks_path(
                     module_config.path, case_config.playbooks
@@ -136,18 +141,18 @@ class TestCase(BaseModel):
             for p_name, given in givens.items()
         ]
 
+    def model_post_init(self, context: Any, /) -> None:
+        object.__setattr__(
+            self,
+            "display_name",
+            _create_test_case_display_name(
+                self.path, self.name, self.parametrized_name
+            ),
+        )
+        return super().model_post_init(context)
+
     @model_validator(mode="after")  # type: ignore[misc]
     def validate_content(self) -> Self:
-        if not self.playbooks and not self.tasks:
-            msg = f"Test case require playbooks or tasks. name: {self.name}"
-            raise ValueError(msg)
-
-        if self.playbooks and self.tasks:
-            msg = f"Test case can only provide playbooks or tasks. name: {self.name}"
-            raise ValueError(msg)
-
-        if not self.playbooks and not self.tasks:
-            msg = f"Test case must contains playbooks or tasks. name: {self.name}"
-            raise ValueError(msg)
+        _validate_tasks_and_playbooks(self)
 
         return self
