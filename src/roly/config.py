@@ -6,10 +6,11 @@ import os
 from collections import ChainMap
 from enum import Enum
 from pathlib import Path
-from typing import Self
+from typing import TYPE_CHECKING, Annotated
+from urllib.parse import urlparse
 
 import yaml
-from pydantic import AnyUrl, BaseModel, ConfigDict
+from pydantic import AnyUrl, BaseModel, ConfigDict, ValidationError, WrapValidator
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -19,6 +20,9 @@ from pydantic_settings import (
 
 from roly.consts import ROLY_CONFIG_PATH_ENV_NAME
 from roly.test_case import TestCaseGiven
+
+if TYPE_CHECKING:
+    from typing import Any, Self
 
 logger = logging.getLogger(__name__)
 
@@ -73,10 +77,45 @@ class AnsiblePlaybookCommandConfig(BaseModel):
         )
 
 
+class GitUri(BaseModel):
+    netloc: str
+    path: str
+    uri: str
+    cache_key: str = ""
+
+    @classmethod
+    def from_raw(cls, uri: str) -> Self:
+        if uri.startswith("http"):
+            result = urlparse(uri)
+            return cls(netloc=result.netloc, path=result.path, uri=uri)
+        if uri.startswith("git@") and ":" in uri:
+            _, _, base = uri.partition("@")
+            netloc, _, path = base.partition(":")
+            return cls(netloc=netloc, path=path, uri=uri)
+
+        msg = f"Not support for the git uri: {uri}"
+        raise ValidationError(msg)
+
+    def model_post_init(self, context: Any, /) -> None:
+        object.__setattr__(self, "cache_key", f"{self.netloc}/{self.path}")
+
+        return super().model_post_init(context)
+
+
+def validate_git_uri(value, handler) -> GitUri:
+    if isinstance(value, str):
+        return GitUri.from_raw(value)
+
+    return handler(value)
+
+
+type ParsedGitUri = Annotated[GitUri, WrapValidator(validate_git_uri)]
+
+
 class RepoRoleConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    repo: Repo
+    repo: ParsedGitUri
     path: str = "roles"
 
 
@@ -84,7 +123,7 @@ class AnsibleConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     roles_path: list[Path | RepoRoleConfig] = []
-    repo_staging: dict[Repo, Path] = {}
+    repo_staging: dict[ParsedGitUri, Path] = {}
     ansible_playbook: AnsiblePlaybookCommandConfig = AnsiblePlaybookCommandConfig()
 
     @classmethod

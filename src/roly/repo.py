@@ -4,40 +4,13 @@ import datetime
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
-from urllib.parse import urlparse
 
 from diskcache import Cache
 from pydantic import BaseModel, Field, NaiveDatetime
 
-if TYPE_CHECKING:
-    from typing import Any, Self
+from roly.config import GitUri
 
 logger = logging.getLogger(__name__)
-
-
-class GitUri(BaseModel):
-    netloc: str
-    path: str
-    uri: str
-    cache_key: str = ""
-
-    @classmethod
-    def from_raw(cls, uri: str) -> Self:
-        if uri.startswith("http"):
-            result = urlparse(uri)
-            return cls(netloc=result.netloc, path=result.path, uri=uri)
-        if uri.startswith("git@") and ":" in uri:
-            _, _, base = uri.partition("@")
-            netloc, _, path = base.partition(":")
-            return cls(netloc=netloc, path=path, uri=uri)
-
-        raise NotImplementedError
-
-    def model_post_init(self, context: Any, /) -> None:
-        object.__setattr__(self, "cache_key", f"{self.netloc}/{self.path}")
-
-        return super().model_post_init(context)
 
 
 class RepoCacheEntry(BaseModel):
