@@ -80,13 +80,6 @@ class RepoRoleConfig(BaseModel):
     path: str = "roles"
 
 
-class RepoPlaybookConfig(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    repo: Repo
-    path: str = "playbooks"
-
-
 class AnsibleConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
