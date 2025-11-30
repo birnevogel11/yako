@@ -4,7 +4,7 @@ from typing import Annotated
 
 import typer
 
-from roly.runner.test_runner import run_test_cli
+from roly.runner.runner import run_tests_cli
 
 app = typer.Typer()
 
@@ -31,7 +31,7 @@ def run_tests(
 ) -> None:
     _init_logging(verbose)
 
-    run_test_cli(base_path=base, config_path=config)
+    run_tests_cli(base_path=base, config_path=config)
 
 
 def main() -> None:

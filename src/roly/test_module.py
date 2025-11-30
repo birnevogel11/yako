@@ -9,7 +9,13 @@ import pydantic
 import yaml
 from pydantic import BaseModel, ConfigDict
 
-from roly.test_case import TestCase, TestCaseGiven, TestCaseInputConfig
+from roly.test_case import (
+    TestCase,
+    TestCaseGiven,
+    TestCaseInputConfig,
+    TestCaseResult,
+    TestCaseResultState,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -104,8 +110,50 @@ def _list_test_module_input_configs(config: RolyConfig) -> list[TestModuleInputC
     return module_configs
 
 
-def list_test_modules(config: RolyConfig) -> list[TestModule]:
-    return [
-        TestModule.from_input_config(config, module_config)
-        for module_config in _list_test_module_input_configs(config)
-    ]
+class TestSuite(BaseModel):
+    test_modules: list[TestModule]
+
+    @classmethod
+    def from_config(cls, config: RolyConfig) -> Self:
+        return cls(
+            test_modules=[
+                TestModule.from_input_config(config, module_config)
+                for module_config in _list_test_module_input_configs(config)
+            ]
+        )
+
+    def test_case_size(self) -> int:
+        return sum(len(test_module.test_cases) for test_module in self.test_modules)
+
+    def list_test_cases(self) -> list[TestCase]:
+        test_cases = (
+            test_case
+            for test_module in self.test_modules
+            for test_case in test_module.test_cases
+        )
+
+        return sorted(test_cases, key=lambda t: t.display_name)
+
+
+class TestSuiteResult(BaseModel):
+    is_success: bool = False
+    total_test_cases: int = 0
+    executed_test_cases: int = 0
+    test_case_results: list[TestCaseResult] = []
+
+    @classmethod
+    def from_test_case_results(
+        cls, cases: list[TestCase], case_results: list[TestCaseResult]
+    ) -> Self:
+        return cls(
+            is_success=all(
+                result.state
+                in (TestCaseResultState.Success, TestCaseResultState.Skipped)
+                for result in case_results
+            ),
+            total_test_cases=len(cases),
+            executed_test_cases=len(
+                [result.state != TestCaseResultState.Skipped for result in case_results]
+            ),
+            test_case_results=case_results,
+        )

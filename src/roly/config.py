@@ -42,6 +42,7 @@ class AnsiblePlaybookCommandConfig(BaseModel):
     connection: str = "local"
     inventory: str = "127.0.0.1"
     limit: str = "127.0.0.1,"
+    ansible_stdout_callback: str = "debug"
     extra_args: list[str] = []
 
     @classmethod
@@ -145,20 +146,6 @@ class AnsibleConfig(BaseModel):
             ansible_playbook=ansible_playbook,
         )
 
-    def expand_roles_path(self) -> list[Path]:
-        paths = []
-        for role_path in self.roles_path:
-            match role_path:
-                case Path():
-                    path = role_path.resolve()
-                case RepoRoleConfig():
-                    # TODO: implement it
-                    raise NotImplementedError
-
-            paths.append(path)
-
-        return paths
-
 
 class LocalRunnerConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -179,7 +166,18 @@ class DockerRunnerConfig(BaseModel):
     roly_venv_dir: Path = Path("/home/ubuntu/app")
     extra_args: list[str] = []
 
+    ansible_playbook_bin: Path = Path("/home/ubuntu/app/bin/ansible-playbook")
+
     host_roly_src_dir: Path | None = None
+
+    def model_post_init(self, context: Any, /) -> None:
+        object.__setattr__(
+            self,
+            "ansible_playbook_bin",
+            self.roly_venv_dir / "bin" / "ansible-playbook",
+        )
+
+        return super().model_post_init(context)
 
 
 class DockerRunnerInputConfig(DockerRunnerConfig):

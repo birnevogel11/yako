@@ -72,8 +72,10 @@ class RepoCache:
 
 
 class RepoPathResolver:
-    def __init__(self, repo_cache: RepoCache, repo_staging: dict[GitUri, Path]) -> None:
-        self._repo_cache = repo_cache
+    def __init__(
+        self, repo_staging: dict[GitUri, Path], repo_cache: RepoCache | None = None
+    ) -> None:
+        self._repo_cache = repo_cache or RepoCache()
         self._repo_staging = repo_staging
 
     def resolve(self, repo_uri: str | GitUri) -> Path:

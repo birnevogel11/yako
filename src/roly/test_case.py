@@ -1,21 +1,29 @@
 from __future__ import annotations
 
+import enum
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
+from roly.consts import ROLY_TEST_CONFIG_KEY
 from roly.given import TestCaseGiven
 from roly.utils import not_test
 
 if TYPE_CHECKING:
+    import subprocess
     from typing import Self
 
     from roly.config import RolyConfig
     from roly.test_module import TestModuleInputConfig
 
 logger = logging.getLogger(__name__)
+
+PLAYBOOK_DEFAULT_CONTENT = {
+    "hosts": "all",
+    "any_errors_fatal": True,
+}
 
 
 def _create_test_case_display_name(
@@ -42,23 +50,27 @@ def _create_test_case_display_name(
 def _resolve_playbooks_path(
     test_module_path: Path, playbooks_path: list[str], base_dir: Path | None = None
 ) -> list[Path]:
-    base_dir_order = [
+    search_bases = [
         test_module_path.resolve().parent,
         (base_dir or Path.cwd()).resolve(),
     ]
 
     resolved_paths = []
     for name in playbooks_path:
-        resolved_path = next((base / name for base in base_dir_order), None)
-        if not resolved_path:
-            logger.error(
-                "Can not resolve the playbook path. test_module_path: %s, "
-                "playbook_path: %s",
-                test_module_path,
-                name,
-            )
+        resolved_path = None
+        if (resolved_path := Path(name)).is_absolute():
+            logger.debug("%s is an absolute path. Skip to resolve it")
         else:
-            resolved_paths.append(resolved_path)
+            resolved_path = next((base / name for base in search_bases), None)
+            if not resolved_path:
+                msg = (
+                    f"Can not resolve the playbook path. "
+                    f"test_module_path: {test_module_path}, "
+                    f"playbook_path: {name}"
+                )
+                raise ValueError(msg)
+
+        resolved_paths.append(resolved_path)
 
     return resolved_paths
 
@@ -156,3 +168,60 @@ class TestCase(BaseModel):
         _validate_tasks_and_playbooks(self)
 
         return self
+
+    def to_roly_callback_test_case_config(self) -> dict[str, Any]:
+        return {ROLY_TEST_CONFIG_KEY: self.model_dump()}
+
+    def is_match(self, filter_key: str) -> bool:
+        return filter_key in self.display_name
+
+
+class TestCaseResultState(enum.Enum):
+    Success = "success"
+    Failed = "failed"
+    Error = "error"
+    Skipped = "skipped"
+
+
+class TestCaseResult(BaseModel):
+    name: str = ""
+    path: Path = Path.cwd()
+
+    state: TestCaseResultState = TestCaseResultState.Success
+    cmd: list[str] = []
+    return_code: int = 0
+    stdout: str = ""
+    stderr: str = ""
+    test_case: TestCase | None = None
+
+    @classmethod
+    def from_test_case_and_cmd_result(
+        cls, case: TestCase, cmd_result: subprocess.CompletedProcess[str]
+    ) -> Self:
+        return cls(
+            name=case.display_name,
+            path=case.path,
+            state=(
+                TestCaseResultState.Success
+                if cmd_result.returncode == 0
+                else TestCaseResultState.Failed
+            ),
+            cmd=cmd_result.args,
+            return_code=cmd_result.returncode,
+            stdout=cmd_result.stdout,
+            stderr=cmd_result.stderr,
+            test_case=case,
+        )
+
+    @classmethod
+    def from_skipped_test_case(cls, case: TestCase) -> Self:
+        return cls(
+            name=case.display_name,
+            path=case.path,
+            state=TestCaseResultState.Skipped,
+            test_case=case,
+        )
+
+
+def make_content_playbook(raw_content: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{**PLAYBOOK_DEFAULT_CONTENT, "tasks": raw_content}]
