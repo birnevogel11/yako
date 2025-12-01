@@ -40,8 +40,8 @@ class AnsiblePlaybookCommandConfig(BaseModel):
 
     verbose: bool = True
     connection: str = "local"
-    inventory: str = "127.0.0.1"
-    limit: str = "127.0.0.1,"
+    inventory: str = "127.0.0.1,"
+    limit: str = "127.0.0.1"
     ansible_stdout_callback: str = "debug"
     extra_args: list[str] = []
 
@@ -55,6 +55,7 @@ class AnsiblePlaybookCommandConfig(BaseModel):
             "connection": "local",
             "inventory": "127.0.0.1",
             "limit": "127.0.0.1,",
+            "ansible_stdout_callback": "debug",
         }
 
         merge_config = configs[0].model_copy()
@@ -224,7 +225,7 @@ class RolyInputConfig(BaseSettings):
         yaml_file=["roly.yaml", "roly_local.yaml"],
     )
 
-    base_dir: list[Path] = [Path("test/roly")]
+    base_dir: list[Path] = [Path("tests/roly")]
     runner_mode: RunnerMode = RunnerMode.Local
     ansible: AnsibleConfig = AnsibleConfig()
     runner: RunnerInputConfig = RunnerInputConfig()
@@ -278,8 +279,9 @@ class RolyConfig(BaseModel):
 
 
 def _init_input_config(
-    base_path: list[Path] | None = None, config_path: Path | None = None
+    base_path: Path | None = None, config_path: Path | None = None
 ) -> RolyInputConfig:
+    path = None
     if config_path:
         path = config_path
     elif raw_path := os.environ.get(ROLY_CONFIG_PATH_ENV_NAME):
@@ -299,6 +301,6 @@ def _init_input_config(
 
 
 def init_config(
-    base_path: list[Path] | None = None, config_path: Path | None = None
+    base_path: Path | None = None, config_path: Path | None = None
 ) -> RolyConfig:
     return RolyConfig.from_input_config(_init_input_config(base_path, config_path))

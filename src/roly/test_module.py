@@ -98,14 +98,20 @@ def _list_test_module_input_configs(config: RolyConfig) -> list[TestModuleInputC
 
     module_configs = []
     for path in test_modules_path:
+        test_module_input_config = None
         try:
             test_module_input_config = TestModuleInputConfig.model_validate(
-                {*{"path": path}, *yaml.safe_load(path.read_text())}
+                {"path": path, **yaml.safe_load(path.read_text())}
             )
-        except pydantic.ValidationError:
-            logger.warning("Failed to parse test module. Skip the file. path: %s", path)
+        except pydantic.ValidationError as err:
+            logger.warning(
+                "Failed to parse test module. Skip the file. path: %s, err: %s",
+                path,
+                err.errors(),
+            )
 
-        module_configs.append(test_module_input_config)
+        if test_module_input_config:
+            module_configs.append(test_module_input_config)
 
     return module_configs
 

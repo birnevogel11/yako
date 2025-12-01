@@ -7,12 +7,11 @@ import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import yaml
-
 from roly.ansible import make_ansible_playbook_cmd, make_roly_ansible_config
 from roly.resolve import resolve_roles_path
 from roly.runner.utils import run_command
 from roly.test_case import make_content_playbook
+from roly.yaml import safe_dump
 
 if TYPE_CHECKING:
     import subprocess
@@ -37,10 +36,10 @@ def _search_ansible_playbook() -> Path:
 def _create_local_ansible_config(
     output_base_dir: Path,
     roles_ct_path: list[Path],
-    ansible_playbook_bin: Path,
+    python_bin: Path | None = None,
 ) -> Path:
     make_roly_ansible_config(
-        python_bin=str(ansible_playbook_bin),
+        python_bin=str(python_bin) if python_bin else None,
         roles_path=[str(path) for path in roles_ct_path],
         output_path=output_base_dir / "ansible.cfg",
     )
@@ -50,7 +49,8 @@ def _create_local_ansible_config(
 
 def _create_playbook_from_tasks(case: TestCase, ws_dir: Path) -> TestCase:
     playbook_path = ws_dir / "test_case_playbook.yaml"
-    playbook_path.write_text(yaml.dump(make_content_playbook(case.tasks)))
+    content = make_content_playbook(case.tasks)
+    playbook_path.write_text(safe_dump(content))
     return case.model_copy(update={"playbooks": [playbook_path], "tasks": []})
 
 
@@ -69,9 +69,7 @@ class LocalTestCaseRunner:
     def init(self, base_dir: Path) -> None:
         roles_path = resolve_roles_path(self._config.ansible)
         ansible_playbook_bin = _search_ansible_playbook()
-        ansible_cfg_path = _create_local_ansible_config(
-            base_dir, roles_path, ansible_playbook_bin
-        )
+        ansible_cfg_path = _create_local_ansible_config(base_dir, roles_path)
 
         self._update_internal_path_state(ansible_cfg_path, ansible_playbook_bin)
 
@@ -93,5 +91,4 @@ class LocalTestCaseRunner:
                 roly_test_case_path=roly_test_case_path,
                 roly_workspace_dir=ws_dir,
             )
-
             return run_command(cmd=cmd, env=env)

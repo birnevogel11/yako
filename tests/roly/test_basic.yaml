@@ -1,0 +1,6 @@
+test_cases:
+  - name: "test_hello"
+    tasks:
+      - name: Print hello world
+        debug:
+          msg: "Hello, world!"

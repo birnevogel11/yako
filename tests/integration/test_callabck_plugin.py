@@ -57,7 +57,7 @@ def _run_ansible_playbook(
         raise RuntimeError("ansible-playbook is unavailable.")
 
     env = {
-        "ANSIBLE_CFG": str(ansible_cfg_path),
+        "ANSIBLE_CONFIG": str(ansible_cfg_path),
         "ANSIBLE_STDOUT_CALLBACK": "debug",
     }
     cmd: tuple[str, ...] = (
