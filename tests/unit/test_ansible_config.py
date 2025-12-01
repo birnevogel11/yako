@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from inline_snapshot import snapshot
 
-from roly.ansible_config import make_roly_ansible_config
+from roly.ansible import make_roly_ansible_config
 
 
 @pytest.mark.parametrize(

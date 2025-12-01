@@ -32,7 +32,7 @@ type Repo = AnyUrl
 
 class RunnerMode(Enum):
     Docker = "docker"
-    Local = "Local"
+    Local = "local"
 
 
 class AnsiblePlaybookCommandConfig(BaseModel):
@@ -225,7 +225,7 @@ class RolyInputConfig(BaseSettings):
     )
 
     base_dir: list[Path] = [Path("test/roly")]
-    runner_mode: RunnerMode = RunnerMode.Docker
+    runner_mode: RunnerMode = RunnerMode.Local
     ansible: AnsibleConfig = AnsibleConfig()
     runner: RunnerInputConfig = RunnerInputConfig()
     given: TestCaseGiven = TestCaseGiven()
@@ -249,7 +249,7 @@ class RolyInputConfig(BaseSettings):
 
 
 class RolyConfig(BaseModel):
-    base_dir: list[Path] = [Path("test/roly")]
+    base_dir: list[Path] = [Path("tests/roly")]
     runner_mode: RunnerMode = RunnerMode.Docker
     ansible: AnsibleConfig = AnsibleConfig()
     runner: RunnerConfig = RunnerConfig()

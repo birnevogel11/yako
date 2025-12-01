@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import pytest
 import yaml
 
-from roly.ansible_config import make_roly_ansible_config
+from roly.ansible import make_roly_ansible_config
 from roly.consts import ROLY_TEST_CONFIG_KEY
 from roly.test_case import TestCaseInputConfig
 

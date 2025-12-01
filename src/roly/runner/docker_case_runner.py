@@ -1,21 +1,22 @@
 from __future__ import annotations
 
 import logging
-import subprocess
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, NewType, cast
 
 import yaml
 
-from roly.ansible_config import make_roly_ansible_config
+from roly.ansible import make_ansible_playbook_cmd, make_roly_ansible_config
 from roly.resolve import resolve_roles_path
+from roly.runner.utils import run_command
 from roly.test_case import make_content_playbook
 
 if TYPE_CHECKING:
+    import subprocess
     from collections.abc import Iterable
 
-    from roly.config import AnsiblePlaybookCommandConfig, DockerRunnerConfig, RolyConfig
+    from roly.config import DockerRunnerConfig, RolyConfig
     from roly.test_case import TestCase
 
 
@@ -78,7 +79,7 @@ def _remap_playbook_path(
 
 
 def _create_ct_playbook(case: TestCase, ws_dir: Path, ws_ct_dir: Path) -> TestCase:
-    playbook_path = ws_dir / "test_case_plabook.yaml"
+    playbook_path = ws_dir / "test_case_playbook.yaml"
     playbook_ct_path = ws_ct_dir / playbook_path.name
 
     playbook_path.write_text(yaml.dump(make_content_playbook(case.tasks)))
@@ -97,38 +98,6 @@ def _convert_test_case_playbook(
         if case.playbooks
         else _create_ct_playbook(case, ws_dir, ws_ct_dir)
     )
-
-
-def _make_ansible_playbook_cmd(
-    *,
-    ansible_playbook_bin: Path,
-    ansible_cfg_path: Path,
-    cmd_config: AnsiblePlaybookCommandConfig,
-    roly_workspace_dir: Path,
-    roly_test_case_path: Path,
-    playbook_path: list[Path],
-) -> tuple[list[str], dict[str, str]]:
-    env = {
-        "ANSIBLE_CFG": str(ansible_cfg_path),
-        "ANSIBLE_STDOUT_CALLBACK": cmd_config.ansible_stdout_callback,
-    }
-    cmd = [
-        str(ansible_playbook_bin),
-        "-v",
-        f"--connection={cmd_config.connection}",
-        "--inventory",
-        f"{cmd_config.inventory}",
-        "--limit",
-        f"{cmd_config.limit}",
-        "-e",
-        f"@{roly_test_case_path.resolve()}",
-        "-e",
-        f"roly_workspace_dir={roly_workspace_dir.resolve()}",
-        *(cmd_config.extra_args or ()),
-        *(str(path) for path in playbook_path),
-    ]
-
-    return cmd, env
 
 
 def _make_docker_cmd(
@@ -154,59 +123,6 @@ def _make_docker_cmd(
     cmd.extend(ansible_cmd)
 
     return cmd
-
-
-def _run_command(
-    cmd: list[str], capture_output: bool = True
-) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        cmd, check=False, capture_output=capture_output, encoding="utf-8"
-    )
-
-
-def _run_test_case(
-    case: TestCase,
-    cmd_config: AnsiblePlaybookCommandConfig,
-    runner_config: DockerRunnerConfig,
-    base_mount_mappings: dict[Path, ContainerPath],
-    playbook_ct_dirs: dict[Path, ContainerPath],
-    ansible_config_ct_path: ContainerPath,
-) -> subprocess.CompletedProcess[str]:
-    with tempfile.TemporaryDirectory() as raw_ws_dir:
-        ws_dir = Path(raw_ws_dir)
-        ws_ct_dir = runner_config.workspace_dir
-
-        test_case = _convert_test_case_playbook(
-            case, ws_dir, ws_ct_dir, playbook_ct_dirs
-        )
-
-        test_case_path = ws_dir / "test_case.yaml"
-        test_case_path.write_text(
-            yaml.dump(test_case.to_roly_callback_test_case_config())
-        )
-
-        ansible_cmd, ansible_cmd_env = _make_ansible_playbook_cmd(
-            ansible_playbook_bin=runner_config.ansible_playbook_bin,
-            ansible_cfg_path=ansible_config_ct_path,
-            cmd_config=cmd_config,
-            roly_test_case_path=ws_ct_dir / test_case_path.name,
-            roly_workspace_dir=ws_ct_dir,
-            playbook_path=test_case.playbooks,
-        )
-        docker_cmd = _make_docker_cmd(
-            ansible_cmd,
-            ansible_cmd_env,
-            runner_config,
-            cast(
-                "dict[Path, ContainerPath]",
-                {
-                    **base_mount_mappings,
-                    ws_dir: ws_ct_dir,
-                },
-            ),
-        )
-
-        return _run_command(docker_cmd)
 
 
 class DockerTestCaseRunner:
@@ -246,11 +162,38 @@ class DockerTestCaseRunner:
         self._update_internal_path_state(ansible_cfg_path)
 
     def run(self, case: TestCase) -> subprocess.CompletedProcess[str]:
-        return _run_test_case(
-            case,
-            self._config.ansible.ansible_playbook,
-            self._config.runner.docker,
-            self._base_mount_mappings,
-            self._playbook_ct_dirs,
-            self._ansible_cfg_ct_path,
-        )
+        with tempfile.TemporaryDirectory() as raw_ws_dir:
+            ws_dir = Path(raw_ws_dir)
+
+            runner_config = self._config.runner.docker
+            ws_ct_dir = runner_config.workspace_dir
+
+            case = _convert_test_case_playbook(
+                case, ws_dir, ws_ct_dir, self._playbook_ct_dirs
+            )
+
+            roly_test_case_path = ws_dir / "test_case.yaml"
+            case.dump_roly_callback_config_file(roly_test_case_path)
+
+            ansible_cmd, ansible_cmd_env = make_ansible_playbook_cmd(
+                ansible_playbook_bin=runner_config.ansible_playbook_bin,
+                ansible_cfg_path=self._ansible_cfg_ct_path,
+                cmd_config=self._config.ansible.ansible_playbook,
+                roly_test_case_path=ws_ct_dir / roly_test_case_path.name,
+                roly_workspace_dir=ws_ct_dir,
+                playbook_path=case.playbooks,
+            )
+            docker_cmd = _make_docker_cmd(
+                ansible_cmd,
+                ansible_cmd_env,
+                runner_config,
+                cast(
+                    "dict[Path, ContainerPath]",
+                    {
+                        **self._base_mount_mappings,
+                        ws_dir: ws_ct_dir,
+                    },
+                ),
+            )
+
+            return run_command(docker_cmd)

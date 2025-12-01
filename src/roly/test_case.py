@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import yaml
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from roly.consts import ROLY_TEST_CONFIG_KEY
@@ -169,8 +170,8 @@ class TestCase(BaseModel):
 
         return self
 
-    def to_roly_callback_test_case_config(self) -> dict[str, Any]:
-        return {ROLY_TEST_CONFIG_KEY: self.model_dump()}
+    def dump_roly_callback_config_file(self, output_path: Path) -> None:
+        output_path.write_text(yaml.dump({ROLY_TEST_CONFIG_KEY: self.model_dump()}))
 
     def is_match(self, filter_key: str) -> bool:
         return filter_key in self.display_name
