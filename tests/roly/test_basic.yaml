@@ -4,3 +4,7 @@ test_cases:
       - name: Print hello world
         debug:
           msg: "Hello, world!"
+
+      - name: Set a variable
+        set_fact:
+          my_variable: "This is a test variable."
