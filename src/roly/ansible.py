@@ -17,12 +17,18 @@ def make_roly_ansible_config(
     output_path: Path | None = None,
     roles_path: list[str] | None = None,
     playbook_dir: Path | None = None,
+    roly_repo_dir: Path | None = None,
 ) -> configparser.ConfigParser:
     base_dir = base_dir or Path(__file__).parent.resolve()
+    plugins_dir = (
+        roly_repo_dir / "src" / "roly" / "plugins"
+        if roly_repo_dir
+        else base_dir / "plugins"
+    )
 
     default_config = {
-        "library": str(base_dir / "plugins" / "module"),
-        "callback_plugins": str(base_dir / "plugins" / "callback"),
+        "library": str(plugins_dir / "module"),
+        "callback_plugins": str(plugins_dir / "callback"),
         "interpreter_python": python_bin or sys.executable,
     }
     if enable_roly_callback:
@@ -65,9 +71,9 @@ def make_ansible_playbook_cmd(
         "--limit",
         f"{cmd_config.limit}",
         "-e",
-        f"roly_workspace_dir={roly_workspace_dir.resolve()}",
+        f"roly_workspace_dir={roly_workspace_dir}",
         "-e",
-        f"@{roly_test_case_path.resolve()}",
+        f"@{roly_test_case_path}",
         *(cmd_config.extra_args or ()),
         *(str(path) for path in playbook_path),
     ]

@@ -56,6 +56,7 @@ def _create_container_ansible_config(
     make_roly_ansible_config(
         base_dir=config.roly_venv_dir,
         python_bin=str(config.roly_venv_dir / "bin" / "python"),
+        roly_repo_dir=Path("/home/ubuntu/roly"),
         roles_path=[str(path) for path in roles_ct_path],
         output_path=cfg_path,
     )
@@ -135,7 +136,7 @@ class DockerTestCaseRunner:
 
     def _update_internal_path_state(self, ansible_cfg_path: Path) -> None:
         self._ansible_cfg_path = ansible_cfg_path
-        self._base_mount_mappings[self._ansible_cfg_ct_path.parent] = ContainerPath(
+        self._base_mount_mappings[self._ansible_cfg_path.parent] = ContainerPath(
             Path("/host_roly_base")
         )
         self._ansible_cfg_ct_path = (
@@ -159,6 +160,7 @@ class DockerTestCaseRunner:
             self._config.runner.docker,
             [roles_ct_path[path] for path in roles_path],
         )
+        print(ansible_cfg_path.read_text())
         self._update_internal_path_state(ansible_cfg_path)
 
     def run(self, case: TestCase) -> subprocess.CompletedProcess[str]:
