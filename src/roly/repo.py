@@ -6,7 +6,8 @@ import os
 from pathlib import Path
 
 from diskcache import Cache
-from pydantic import BaseModel, Field, NaiveDatetime
+from git import Repo
+from pydantic import BaseModel, ConfigDict, Field, NaiveDatetime
 
 from roly.config import GitUri
 
@@ -14,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class RepoCacheEntry(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     uri: GitUri
     path: Path
     init_time: NaiveDatetime = Field(
@@ -61,7 +64,8 @@ class RepoCache:
 
         cache_path = self._repo_base_dir / uri.cache_key
 
-        # TODO: git clone with gitpython
+        # Clone the repo to the cache path
+        Repo.clone_from(uri.uri, str(cache_path))
 
         self._cache.add(
             uri.cache_key,

@@ -165,6 +165,7 @@ class DockerRunnerConfig(BaseModel):
     # dockerfile: Path = ""  # TODO: Should we support it?  # noqa: ERA001
     workspace_dir: Path = Path("/home/ubuntu/workspace")
     roly_venv_dir: Path = Path("/home/ubuntu/app")
+    roly_src_dir: Path = Path("/home/ubuntu/roly/src/roly")
     extra_args: list[str] = []
 
     ansible_playbook_bin: Path = Path("/home/ubuntu/app/bin/ansible-playbook")

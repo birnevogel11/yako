@@ -54,9 +54,8 @@ def _create_container_ansible_config(
     cfg_path = output_base_dir / "ansible.cfg"
 
     make_roly_ansible_config(
-        base_dir=config.roly_venv_dir,
+        base_dir=config.roly_src_dir,
         python_bin=str(config.roly_venv_dir / "bin" / "python"),
-        roly_repo_dir=Path("/home/ubuntu/roly"),
         roles_path=[str(path) for path in roles_ct_path],
         output_path=cfg_path,
     )

@@ -17,14 +17,9 @@ def make_roly_ansible_config(
     output_path: Path | None = None,
     roles_path: list[str] | None = None,
     playbook_dir: Path | None = None,
-    roly_repo_dir: Path | None = None,
 ) -> configparser.ConfigParser:
     base_dir = base_dir or Path(__file__).parent.resolve()
-    plugins_dir = (
-        roly_repo_dir / "src" / "roly" / "plugins"
-        if roly_repo_dir
-        else base_dir / "plugins"
-    )
+    plugins_dir = base_dir / "plugins"
 
     default_config = {
         "library": str(plugins_dir / "module"),
