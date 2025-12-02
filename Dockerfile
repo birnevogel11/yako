@@ -17,7 +17,7 @@ RUN set -ex \
 USER ubuntu
 
 RUN set -ex \
-    && uv python install 3.14 \
+    && uv python install 3.12 3.14 \
     && uv venv -p 3.14 /home/ubuntu/app \
     && uv pip install --python /home/ubuntu/app/bin/python3 tox black ruff tox-uv ansible \
         ansible-lint pudb typer GitPython pyyaml cerberus
