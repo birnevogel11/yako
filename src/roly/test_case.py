@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 PLAYBOOK_DEFAULT_CONTENT = {
     "hosts": "all",
     "any_errors_fatal": True,
+    "gather_facts": False,
 }
 
 
