@@ -279,7 +279,7 @@ class RolyConfig(BaseModel):
 
 
 def _init_input_config(
-    base_path: Path | None = None, config_path: Path | None = None
+    base_path: list[Path] | None = None, config_path: Path | None = None
 ) -> RolyInputConfig:
     path = None
     if config_path:
@@ -301,6 +301,6 @@ def _init_input_config(
 
 
 def init_config(
-    base_path: Path | None = None, config_path: Path | None = None
+    base_path: list[Path] | None = None, config_path: Path | None = None
 ) -> RolyConfig:
     return RolyConfig.from_input_config(_init_input_config(base_path, config_path))

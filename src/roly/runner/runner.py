@@ -76,7 +76,15 @@ def run_tests(
 
 
 def run_tests_cli(
-    base_path: list[Path] | None = None, config_path: Path | None = None
+    base_path: list[Path] | None = None,
+    config_path: Path | None = None,
+    filter_key: str = "",
+    list_only: bool = False,
 ) -> None:
-    result = run_tests(base_path=base_path, config_path=config_path)
+    result = run_tests(
+        base_path=base_path,
+        config_path=config_path,
+        filter_key=filter_key,
+        list_only=list_only,
+    )
     report_test_suite_result(result)
