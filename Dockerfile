@@ -8,7 +8,6 @@ RUN set -ex \
     && apt upgrade -y \
     && apt install -y build-essential curl wget git pigz moreutils
 
-COPY ./scripts/entrypoint.sh /entrypoint.sh
 COPY . /home/ubuntu/roly
 
 RUN set -ex \
