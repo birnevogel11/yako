@@ -201,7 +201,6 @@ def _mock_task(task: Task, task_config: TestTaskConfig) -> None:
     )
 
     task.action = new_action_name
-    task.resolved_action = new_action_name
     task.args = new_action_name_args
 
 
