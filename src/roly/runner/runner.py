@@ -10,7 +10,7 @@ from roly.report import report_test_suite_result
 from roly.runner.docker_case_runner import DockerTestCaseRunner
 from roly.runner.local_case_runner import LocalTestCaseRunner
 from roly.test_case import TestCaseResult
-from roly.test_module import TestSuite, TestSuiteResult
+from roly.test_module import TestSuite, TestSuiteResult, list_test_module_input_configs2
 
 if TYPE_CHECKING:
     import subprocess
@@ -38,22 +38,32 @@ def run_test_suite(
 
         case_runner.init(base_dir)
 
-        # TODO: show parse error for test_*.yamls
-        test_suite = TestSuite.from_config(config)
-        # TODO: show playbook not found error for test cases
-        test_cases = test_suite.list_test_cases()
+        # List test modules from input. Bypass any pydantic parse errors and
+        # save in err_msgs
+        raw_module_configs, err_msgs = list_test_module_input_configs2(config)
+        test_suite = TestSuite.from_raw_module_configs(config, raw_module_configs)
 
+        # List all test cases from test modules and execute all matched test cases
+        test_cases = test_suite.list_test_cases()
         case_results: list[TestCaseResult] = []
         for case in test_cases:
-            if not list_only and case.is_match(filter_key):
-                cmd_result = case_runner.run(case)
+            if case.has_playbooks() and not case.does_playbook_exists():
                 case_results.append(
-                    TestCaseResult.from_test_case_and_cmd_result(case, cmd_result)
+                    TestCaseResult.from_failed_without_playbooks_test_case(case)
                 )
-            else:
+                continue
+            if list_only or not case.is_match(filter_key):
                 case_results.append(TestCaseResult.from_skipped_test_case(case))
+                continue
 
-        return TestSuiteResult.from_test_case_results(test_cases, case_results)
+            cmd_result = case_runner.run(case)
+            case_results.append(
+                TestCaseResult.from_test_case_and_cmd_result(case, cmd_result)
+            )
+
+        return TestSuiteResult.from_test_case_results(
+            test_cases, case_results, extra_err_msgs=err_msgs
+        )
 
 
 def run_tests(

@@ -85,7 +85,7 @@ def _list_test_modules(base_path: Path) -> Iterable[Path]:
     return ()
 
 
-def _list_test_module_input_configs(config: RolyConfig) -> list[TestModuleInputConfig]:
+def list_test_module_input_configs(config: RolyConfig) -> list[TestModuleInputConfig]:
     _basic_check(config.base_dir)
 
     test_modules_path = sorted(
@@ -116,15 +116,51 @@ def _list_test_module_input_configs(config: RolyConfig) -> list[TestModuleInputC
     return module_configs
 
 
+def list_test_module_input_configs2(
+    config: RolyConfig,
+) -> tuple[list[TestModuleInputConfig], list[str]]:
+    _basic_check(config.base_dir)
+
+    test_modules_path = sorted(
+        set(
+            itertools.chain.from_iterable(
+                _list_test_modules(base_path) for base_path in config.base_dir
+            )
+        )
+    )
+
+    module_configs = []
+    err_msgs = []
+    for path in test_modules_path:
+        test_module_input_config = None
+        try:
+            test_module_input_config = TestModuleInputConfig.model_validate(
+                {"path": path, **yaml.safe_load(path.read_text())}
+            )
+        except pydantic.ValidationError as err:
+            msg = (
+                "Failed to parse test module. Skip the file. "
+                f"path: {path}, err: {err.errors()}"
+            )
+            err_msgs.append(msg)
+
+        if test_module_input_config:
+            module_configs.append(test_module_input_config)
+
+    return module_configs, err_msgs
+
+
 class TestSuite(BaseModel):
     test_modules: list[TestModule]
 
     @classmethod
-    def from_config(cls, config: RolyConfig) -> Self:
+    def from_raw_module_configs(
+        cls, config: RolyConfig, raw_module_configs: list[TestModuleInputConfig]
+    ) -> Self:
         return cls(
             test_modules=[
                 TestModule.from_input_config(config, module_config)
-                for module_config in _list_test_module_input_configs(config)
+                for module_config in raw_module_configs
             ]
         )
 
@@ -146,10 +182,14 @@ class TestSuiteResult(BaseModel):
     total_test_cases: int = 0
     executed_test_cases: int = 0
     test_case_results: list[TestCaseResult] = []
+    extra_err_msgs: list[str] = []
 
     @classmethod
     def from_test_case_results(
-        cls, cases: list[TestCase], case_results: list[TestCaseResult]
+        cls,
+        cases: list[TestCase],
+        case_results: list[TestCaseResult],
+        extra_err_msgs: list[str] | None = None,
     ) -> Self:
         return cls(
             is_success=all(
@@ -162,4 +202,5 @@ class TestSuiteResult(BaseModel):
                 [result.state != TestCaseResultState.Skipped for result in case_results]
             ),
             test_case_results=case_results,
+            extra_err_msgs=extra_err_msgs or [],
         )

@@ -177,6 +177,15 @@ class TestCase(BaseModel):
     def is_match(self, filter_key: str) -> bool:
         return filter_key in self.display_name
 
+    def has_playbooks(self) -> bool:
+        return bool(self.playbooks)
+
+    def does_playbook_exists(self) -> bool:
+        return bool(self.playbooks) and all(p.exists() for p in self.playbooks)
+
+    def not_found_playbooks(self) -> list[Path]:
+        return [p for p in self.playbooks if not p.exists()]
+
 
 class TestCaseResultState(enum.Enum):
     Success = "success"
@@ -192,6 +201,7 @@ class TestCaseResult(BaseModel):
     state: TestCaseResultState = TestCaseResultState.Success
     cmd: list[str] = []
     return_code: int = 0
+    msg: str = ""
     stdout: str = ""
     stderr: str = ""
     test_case: TestCase | None = None
@@ -222,6 +232,19 @@ class TestCaseResult(BaseModel):
             path=case.path,
             state=TestCaseResultState.Skipped,
             test_case=case,
+        )
+
+    @classmethod
+    def from_failed_without_playbooks_test_case(cls, case: TestCase) -> Self:
+        return cls(
+            name=case.display_name,
+            path=case.path,
+            state=TestCaseResultState.Error,
+            test_case=case,
+            msg=(
+                "Test case has playbooks but they do not exist. "
+                f"not found playbooks: {case.not_found_playbooks()}"
+            ),
         )
 
 

@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from roly.test_module import TestSuiteResult
 
 
+# TODO: implement it
 def report_test_suite_result(result: TestSuiteResult) -> None:
     rich.print(result)
     print(result.test_case_results[0].stdout)
