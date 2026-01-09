@@ -159,7 +159,6 @@ class DockerTestCaseRunner:
             self._config.runner.docker,
             [roles_ct_path[path] for path in roles_path],
         )
-        print(ansible_cfg_path.read_text())
         self._update_internal_path_state(ansible_cfg_path)
 
     def run(self, case: TestCase) -> subprocess.CompletedProcess[str]:

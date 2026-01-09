@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
@@ -15,6 +16,7 @@ from roly.test_module import TestSuite, TestSuiteResult, list_test_module_input_
 
 if TYPE_CHECKING:
     import subprocess
+    from typing import Self
 
     from roly.config import RolyConfig
     from roly.test_case import TestCase
@@ -22,6 +24,20 @@ if TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+class Timer:
+    def __init__(self) -> None:
+        self.start_time: float | None = None
+        self.elapsed_time: float | None = None
+
+    def __enter__(self) -> Self:
+        self.start_time = time.time()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        if self.start_time is not None:
+            self.elapsed_time = time.time() - self.start_time
 
 
 class TestCaseRunner(Protocol):
@@ -93,7 +109,7 @@ def run_test_suite(
                 print()
 
         return TestSuiteResult.from_test_case_results(
-            test_suite.list_test_cases(), case_results, extra_err_msgs=err_msgs
+            collect_test_cases, case_results, extra_err_msgs=err_msgs
         )
 
 
@@ -128,13 +144,17 @@ def run_tests_cli(
     list_only: bool = False,
     verbose: bool = False,
 ) -> None:
-    result = run_tests(
-        base_path=base_path,
-        config_path=config_path,
-        filter_key=filter_key,
-        list_only=list_only,
-        verbose_progress=verbose,
-    )
+    with Timer() as timer:
+        result = run_tests(
+            base_path=base_path,
+            config_path=config_path,
+            filter_key=filter_key,
+            list_only=list_only,
+            verbose_progress=verbose,
+        )
+
+    result.execution_time_sec = timer.elapsed_time or 0.0
+
     report_test_suite_result(result)
 
     sys.exit(0 if result.is_success else 1)

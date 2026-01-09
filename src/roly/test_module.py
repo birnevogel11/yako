@@ -183,11 +183,12 @@ class TestSuiteResult(BaseModel):
     executed_test_cases: int = 0
     test_case_results: list[TestCaseResult] = []
     extra_err_msgs: list[str] = []
+    execution_time_sec: float = 0.0
 
     @classmethod
     def from_test_case_results(
         cls,
-        cases: list[TestCase],
+        module_cases: list[tuple[TestModule, list[TestCase]]],
         case_results: list[TestCaseResult],
         extra_err_msgs: list[str] | None = None,
     ) -> Self:
@@ -197,7 +198,7 @@ class TestSuiteResult(BaseModel):
                 in (TestCaseResultState.Success, TestCaseResultState.Skipped)
                 for result in case_results
             ),
-            total_test_cases=len(cases),
+            total_test_cases=sum(len(cases) for _, cases in module_cases),
             executed_test_cases=len(
                 [result.state != TestCaseResultState.Skipped for result in case_results]
             ),
