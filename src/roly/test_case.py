@@ -188,10 +188,32 @@ class TestCase(BaseModel):
 
 
 class TestCaseResultState(enum.Enum):
-    Success = "success"
+    Success = "pass"
     Failed = "failed"
     Error = "error"
     Skipped = "skipped"
+
+    def to_short_result_str(self) -> str:
+        match self:
+            case TestCaseResultState.Success:
+                return "."
+            case TestCaseResultState.Failed:
+                return "F"
+            case TestCaseResultState.Error:
+                return "E"
+            case TestCaseResultState.Skipped:
+                return "S"
+
+    def to_result_str(self) -> str:
+        match self:
+            case TestCaseResultState.Success:
+                return "PASS"
+            case TestCaseResultState.Failed:
+                return "FAILED"
+            case TestCaseResultState.Error:
+                return "ERROR"
+            case TestCaseResultState.Skipped:
+                return "SKIPPED"
 
 
 class TestCaseResult(BaseModel):

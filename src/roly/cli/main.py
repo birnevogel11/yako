@@ -32,7 +32,9 @@ def run_tests(
 ) -> None:
     _init_logging(verbose)
 
-    run_tests_cli(base_path=base, config_path=config, filter_key=filter_key or "")
+    run_tests_cli(
+        base_path=base, config_path=config, filter_key=filter_key or "", verbose=verbose
+    )
 
 
 def main() -> None:
