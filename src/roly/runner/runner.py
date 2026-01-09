@@ -8,11 +8,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 from roly.config import RunnerMode, init_config
-from roly.report import report_test_suite_result
+from roly.report import report_test_config, report_test_suite_result
 from roly.runner.docker_case_runner import DockerTestCaseRunner
 from roly.runner.local_case_runner import LocalTestCaseRunner
 from roly.test_case import TestCaseResult
-from roly.test_module import TestSuite, TestSuiteResult, list_test_module_input_configs2
+from roly.test_module import TestSuite, TestSuiteResult, list_test_module_input_configs
 
 if TYPE_CHECKING:
     import subprocess
@@ -59,7 +59,7 @@ def run_test_suite(
 
         # List test modules from input. Bypass any pydantic parse errors and
         # save in err_msgs
-        raw_module_configs, err_msgs = list_test_module_input_configs2(config)
+        raw_module_configs, err_msgs = list_test_module_input_configs(config)
         test_suite = TestSuite.from_raw_module_configs(config, raw_module_configs)
 
         # List all test cases from test modules and execute all matched test cases
@@ -114,14 +114,11 @@ def run_test_suite(
 
 
 def run_tests(
-    base_path: list[Path] | None = None,
-    config_path: Path | None = None,
+    config: RolyConfig,
     filter_key: str = "",
     list_only: bool = False,
     verbose_progress: bool = False,
 ) -> TestSuiteResult:
-    config = init_config(base_path, config_path)
-
     match config.runner_mode:
         case RunnerMode.Docker:
             case_runner: TestCaseRunner = DockerTestCaseRunner(config)
@@ -145,14 +142,14 @@ def run_tests_cli(
     verbose: bool = False,
 ) -> None:
     with Timer() as timer:
+        config = init_config(base_path, config_path)
+        report_test_config(config)
         result = run_tests(
-            base_path=base_path,
-            config_path=config_path,
+            config=config,
             filter_key=filter_key,
             list_only=list_only,
             verbose_progress=verbose,
         )
-
     result.execution_time_sec = timer.elapsed_time or 0.0
 
     report_test_suite_result(result)

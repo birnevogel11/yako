@@ -8,6 +8,7 @@ import rich.console
 from roly.test_case import TestCaseResultState
 
 if TYPE_CHECKING:
+    from roly.config import RolyConfig
     from roly.test_module import TestSuiteResult
 
 console = rich.console.Console()
@@ -67,6 +68,14 @@ def print_summary_line(result: TestSuiteResult) -> None:
 
     console.print()
     console.rule(" ".join(summary_tokens), align="center", characters="=")
+
+
+def report_test_config(config: RolyConfig) -> None:
+    console.print(
+        "base path(s):", ", ".join(str(p) for p in config.base_dir), style=None
+    )
+    console.print("runner mode:", config.runner_mode.value)
+    console.print()
 
 
 def report_test_suite_result(result: TestSuiteResult) -> None:

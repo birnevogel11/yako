@@ -85,38 +85,7 @@ def _list_test_modules(base_path: Path) -> Iterable[Path]:
     return ()
 
 
-def list_test_module_input_configs(config: RolyConfig) -> list[TestModuleInputConfig]:
-    _basic_check(config.base_dir)
-
-    test_modules_path = sorted(
-        set(
-            itertools.chain.from_iterable(
-                _list_test_modules(base_path) for base_path in config.base_dir
-            )
-        )
-    )
-
-    module_configs = []
-    for path in test_modules_path:
-        test_module_input_config = None
-        try:
-            test_module_input_config = TestModuleInputConfig.model_validate(
-                {"path": path, **yaml.safe_load(path.read_text())}
-            )
-        except pydantic.ValidationError as err:
-            logger.warning(
-                "Failed to parse test module. Skip the file. path: %s, err: %s",
-                path,
-                err.errors(),
-            )
-
-        if test_module_input_config:
-            module_configs.append(test_module_input_config)
-
-    return module_configs
-
-
-def list_test_module_input_configs2(
+def list_test_module_input_configs(
     config: RolyConfig,
 ) -> tuple[list[TestModuleInputConfig], list[str]]:
     _basic_check(config.base_dir)

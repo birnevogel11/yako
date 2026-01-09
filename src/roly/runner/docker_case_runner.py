@@ -113,14 +113,19 @@ def _make_docker_cmd(
 
     for path, ct_path in mount_mapping.items():
         cmd.extend(("-v", f"{path}:{ct_path}"))
+
     if docker_config.host_roly_src_dir:
         cmd.extend(("-v", f"{docker_config.host_roly_src_dir}:/home/ubuntu/roly"))
 
-    cmd.extend(("-w", str(docker_config.workspace_dir)))
-    cmd.extend(docker_config.extra_args)
-
-    cmd.append(docker_config.image_name)
-    cmd.extend(ansible_cmd)
+    cmd.extend(
+        (
+            "-w",
+            str(docker_config.workspace_dir),
+            *docker_config.extra_args,
+            docker_config.image_name,
+            *ansible_cmd,
+        )
+    )
 
     return cmd
 
