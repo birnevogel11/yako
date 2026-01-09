@@ -27,7 +27,9 @@ def run_tests(
     config: Annotated[
         Path | None, typer.Option("-c", "--config", help="config path")
     ] = None,
-    verbose: Annotated[bool, typer.Option(help="Show debug log.")] = False,
+    verbose: Annotated[
+        bool, typer.Option("-v", "--verbose", help="Show debug log.")
+    ] = False,
     filter_key: Annotated[str | None, typer.Option(help="Filter tests by key")] = None,
 ) -> None:
     _init_logging(verbose)

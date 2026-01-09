@@ -164,6 +164,7 @@ class DockerTestCaseRunner:
             self._config.runner.docker,
             [roles_ct_path[path] for path in roles_path],
         )
+        logger.debug("Ansible config content:\n%s", ansible_cfg_path.read_text())
         self._update_internal_path_state(ansible_cfg_path)
 
     def run(self, case: TestCase) -> subprocess.CompletedProcess[str]:
@@ -199,6 +200,11 @@ class DockerTestCaseRunner:
                         ws_dir: ws_ct_dir,
                     },
                 ),
+            )
+            logger.debug(
+                "Run command. test_case: %s, cmd: %s",
+                case.display_name,
+                docker_cmd,
             )
 
             return run_command(docker_cmd)

@@ -71,6 +71,8 @@ class LocalTestCaseRunner:
         ansible_playbook_bin = _search_ansible_playbook()
         ansible_cfg_path = _create_local_ansible_config(base_dir, roles_path)
 
+        logger.debug("Ansible config content:\n%s", ansible_cfg_path.read_text())
+
         self._update_internal_path_state(ansible_cfg_path, ansible_playbook_bin)
 
     def run(self, case: TestCase) -> subprocess.CompletedProcess[str]:
@@ -90,5 +92,10 @@ class LocalTestCaseRunner:
                 playbook_path=case.playbooks,
                 roly_test_case_path=roly_test_case_path,
                 roly_workspace_dir=ws_dir,
+            )
+            logger.debug(
+                "Run command. test_case: %s, cmd: %s",
+                case.display_name,
+                cmd,
             )
             return run_command(cmd=cmd, env=env)
