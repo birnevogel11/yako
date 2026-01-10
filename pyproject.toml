@@ -1,7 +1,7 @@
 [project]
 name = "roly"
-version = "0.1.0"
-description = "Add your description here"
+dynamic = ["version"]
+description = "A mock-based testing framework for Ansible playbooks."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -15,6 +15,20 @@ dependencies = [
     "typer>=0.20.0",
     "typing-extensions>=4.15.0",
 ]
+
+[dependency-groups]
+dev = [
+    "inline-snapshot>=0.31.1",
+    "mypy>=1.18.2",
+    "pytest>=9.0.1",
+    "ruff>=0.14.4",
+]
+
+[build-system]
+requires = ["setuptools>=80", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
 
 [project.scripts]
 roly = "roly.cli.main:main"
@@ -82,14 +96,6 @@ lint.ignore = [
 
 [tool.mypy]
 ignore_missing_imports = true
-
-[dependency-groups]
-dev = [
-    "inline-snapshot>=0.31.1",
-    "mypy>=1.18.2",
-    "pytest>=9.0.1",
-    "ruff>=0.14.4",
-]
 
 [tool.pytest.ini_options]
 markers = ["integration",]
