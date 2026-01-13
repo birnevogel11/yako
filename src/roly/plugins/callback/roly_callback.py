@@ -196,7 +196,8 @@ def _mock_task(task: Task, task_config: TestTaskConfig) -> None:
     _display_message_ok(
         (
             f"mock module - Before: '{original_action_name}' "
-            f"Now: '{new_action_name}' with custom action"
+            f"Now: '{new_action_name}' with custom action, "
+            f"args: {new_action_name_args}"
         ),
     )
 

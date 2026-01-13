@@ -19,6 +19,7 @@ def print_failure_cases(result: TestSuiteResult) -> None:
         if case_result.state in (
             TestCaseResultState.Error,
             TestCaseResultState.Failed,
+            TestCaseResultState.Success,
         ):
             console.rule(
                 (
