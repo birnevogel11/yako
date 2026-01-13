@@ -101,7 +101,7 @@ class TestCaseInputConfig(BaseModel):
     tasks: list[dict[str, Any]] = []
     parametrize: dict[str, TestCaseGiven] = {}
 
-    @model_validator(mode="after")  # type: ignore[misc]
+    @model_validator(mode="after")
     def validate_content(self) -> Self:
         _validate_tasks_and_playbooks(self)
 

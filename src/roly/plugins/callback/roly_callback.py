@@ -334,7 +334,7 @@ class CallbackModule(CallbackBase):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self._roly: RolyInternalState = None  # type: ignore[assignment]
+        self._roly: RolyInternalState = None
 
     def v2_playbook_on_play_start(self, play: Play) -> Play:
         play_extra_vars = play.get_variable_manager().extra_vars
