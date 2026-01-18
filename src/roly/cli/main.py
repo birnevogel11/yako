@@ -4,6 +4,7 @@ from typing import Annotated
 
 import typer
 
+from roly.plugin_cli import run_plugin_callback_test
 from roly.runner.runner import run_tests_cli
 
 app = typer.Typer()
@@ -37,6 +38,17 @@ def run_tests(
     run_tests_cli(
         base_path=base, config_path=config, filter_key=filter_key or "", verbose=verbose
     )
+
+
+@app.command(name="test-callback")
+def run_test_callback(
+    path: Annotated[Path, typer.Argument(help="Native test path")],
+) -> None:
+    _init_logging(True)
+
+    result = run_plugin_callback_test(path, capture_output=False)
+    if result.returncode != 0:
+        raise typer.Exit(code=result.returncode)
 
 
 def main() -> None:

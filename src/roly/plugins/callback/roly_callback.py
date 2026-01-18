@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import contextlib
 import functools
+import shutil
 import sys
 from collections import ChainMap
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from ansible import constants as C  # # noqa: N812
@@ -14,7 +16,7 @@ from ansible.template import Templar
 from ansible.utils.display import Display
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from roly.given import TestTaskConfig  # noqa: TC001
+from roly.given import CopyFileConfig, TestTaskConfig
 from roly.test_case import TestCase
 
 if TYPE_CHECKING:
@@ -27,7 +29,7 @@ if TYPE_CHECKING:
     from ansible.playbook.task import Task
 
     from roly.assert_check import AssertResult
-    from roly.given import TestCaseAssert
+    from roly.given import TestCaseAssert, TestCaseGiven
 
 global_display = Display()
 
@@ -62,7 +64,7 @@ class RolyTestConfig(TestCase):
 
     ROLY_TEST_CONFIG_KEY: ClassVar[str] = "ROLY_TEST_CASE_CONFIG"
 
-    # The variable is from ansible, not found input config
+    # These variables are from ansible, not found input config
     play_extra_vars_base: dict[str, Any] = {}  # noqa: RUF012
 
     @classmethod
@@ -70,6 +72,10 @@ class RolyTestConfig(TestCase):
         if not (raw_test_config := play_extra_vars_base.get(cls.ROLY_TEST_CONFIG_KEY)):
             msg = f"{cls.ROLY_TEST_CONFIG_KEY} not found!"
             raise RolyAnsiblePluginError(msg)
+
+        if extra_vars := raw_test_config.get("given", {}).get("extra_vars"):
+            # Merge extra_vars into play_extra_vars_base for variable templating
+            play_extra_vars_base.update(extra_vars)
 
         # Variables placed into the config need to be instantiated with extra vars
         templar = Templar(loader=DataLoader(), variables=play_extra_vars_base)
@@ -136,6 +142,17 @@ class RolyInternalState(BaseModel):
     test_config: RolyTestConfig
     task_config: TestTaskConfig | None = None
     var_templar: VariableTemplar | None = None
+    roly_workspace_dir: Path | None = None
+
+    @classmethod
+    def from_test_config(
+        cls, test_config: RolyTestConfig, play_extra_vars: dict[str, Any]
+    ) -> Self:
+        roly_workspace_dir = play_extra_vars.get("roly_workspace_dir")
+        if roly_workspace_dir:
+            roly_workspace_dir = Path(roly_workspace_dir)
+
+        return cls(test_config=test_config, roly_workspace_dir=roly_workspace_dir)
 
     def assign_current_task_config(self, host: Host, task: Task) -> None:
         """Find and assign the roly task config and templar.
@@ -330,11 +347,108 @@ def _assert_task_state(
         raise RolyAnsiblePluginError(msg)
 
 
+def _get_playbook_path(play: Play) -> Path:
+    raw_path = play.get_path()
+    path, _, _ = raw_path.partition(":")
+    return Path(path)
+
+
+def _resolve_file_src_configs(
+    playbook_path: Path,
+    files: list[CopyFileConfig],
+    play_extra_vars: dict[str, Any],
+) -> list[CopyFileConfig]:
+    if raw_roly_search_file_path := play_extra_vars.get("roly_search_file_path"):
+        search_paths = [Path(p) for p in raw_roly_search_file_path.split(":")]
+    else:
+        search_paths = [Path.cwd(), playbook_path.parent.resolve()]
+
+    resolved_file_configs = []
+    for file_config in files:
+        src_path = next(
+            (
+                path
+                for base in search_paths
+                if (path := base / file_config.src).exists()
+            ),
+            None,
+        )
+
+        if not src_path:
+            msg = (
+                f"Source file for copy not found. src: {file_config.src}, "
+                f"search_paths: {search_paths}"
+            )
+            raise RolyAnsiblePluginError(msg)
+
+        resolved_file_configs.append(
+            CopyFileConfig(src=str(src_path), dest=file_config.dest)
+        )
+
+    return resolved_file_configs
+
+
+def _resolve_file_dest_configs(
+    files: list[CopyFileConfig], roly_workspace_dir: Path | None = None
+) -> list[CopyFileConfig]:
+    new_files = []
+    for ori_file in files:
+        if Path(ori_file.dest).is_absolute():
+            dest_path = Path(ori_file.dest)
+        elif roly_workspace_dir:
+            dest_path = roly_workspace_dir / ori_file.dest
+        else:
+            raise RolyAnsiblePluginError(
+                "Relative dest path provided without roly_workspace_dir. "
+            )
+        new_files.append(
+            CopyFileConfig(src=ori_file.src, dest=str(dest_path.resolve()))
+        )
+
+    return new_files
+
+
+def _copy_files_with_configs(file_configs: list[CopyFileConfig]) -> None:
+    for file_config in file_configs:
+        src_path = Path(file_config.src)
+        dest_path = Path(file_config.dest)
+        if src_path.is_file():
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(src_path, dest_path)
+        elif src_path.is_dir():
+            if file_config.dest.endswith("/"):
+                dest_dir = dest_path / src_path.name
+            else:
+                dest_dir = dest_path
+
+            dest_dir.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(src_path, dest_dir, dirs_exist_ok=True)
+
+        _display_message_ok(
+            f"Copied file from {src_path} to {dest_path}",
+        )
+
+
+def _copy_test_case_files(
+    playbook_path: Path,
+    given: TestCaseGiven,
+    play_extra_vars: dict[str, Any],
+    roly_workspace_dir: Path | None = None,
+) -> None:
+    copy_configs = _resolve_file_src_configs(
+        playbook_path, given.files, play_extra_vars
+    )
+    copy_configs = _resolve_file_dest_configs(
+        copy_configs, roly_workspace_dir=roly_workspace_dir
+    )
+    _copy_files_with_configs(copy_configs)
+
+
 class CallbackModule(CallbackBase):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self._roly: RolyInternalState = None
+        self._roly: RolyInternalState = None  # type: ignore[assignment]
 
     def v2_playbook_on_play_start(self, play: Play) -> Play:
         play_extra_vars = play.get_variable_manager().extra_vars
@@ -346,9 +460,17 @@ class CallbackModule(CallbackBase):
 
         play_extra_vars.update(test_config.given.extra_vars)
 
-        self._roly = RolyInternalState(test_config=test_config)
+        self._roly = RolyInternalState.from_test_config(test_config, play_extra_vars)
+        _copy_test_case_files(
+            playbook_path=_get_playbook_path(play),
+            given=self._roly.test_config.given,
+            play_extra_vars=play_extra_vars,
+            roly_workspace_dir=self._roly.roly_workspace_dir,
+        )
+
         _display_message_ok(
-            f"Start Roly with test case - {self._roly.test_config.name}"
+            f"Start Roly with test case - {self._roly.test_config.name}, "
+            f"Roly workspace dir: {self._roly.roly_workspace_dir}",
         )
 
         return play

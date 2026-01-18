@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import subprocess
 import sys
@@ -50,6 +51,7 @@ def _run_ansible_playbook(
     playbook_path: Path,
     roly_test_case_path: Path,
     ansible_cfg_path: Path,
+    search_file_paths: list[Path],
     extra_args: list[str] | None = None,
     capture_output: bool = True,
 ) -> subprocess.CompletedProcess[str]:
@@ -61,6 +63,7 @@ def _run_ansible_playbook(
         "ANSIBLE_CONFIG": str(ansible_cfg_path),
         "ANSIBLE_STDOUT_CALLBACK": "debug",
     }
+    search_file_path = ":".join(str(p.resolve()) for p in search_file_paths)
     cmd: tuple[str, ...] = (
         *(
             str(ansible_playbook_bin),
@@ -70,6 +73,10 @@ def _run_ansible_playbook(
             "127.0.0.1,",
             "--limit",
             "127.0.0.1",
+            "-e",
+            f"roly_workspace_dir={ws_dir.resolve()}",
+            "-e",
+            f"roly_search_file_path={search_file_path}",
             "-e",
             f"@{roly_test_case_path.resolve()}",
         ),
@@ -112,6 +119,8 @@ def _run_single_test(
                 yaml.dump(_make_content_playbook(test_case.tasks))
             )
 
+            search_file_paths = [ws_dir, test_case_path.parent]
+
             return _run_ansible_playbook(
                 ws_dir=ws_dir,
                 playbook_path=test_playbook_path,
@@ -119,6 +128,7 @@ def _run_single_test(
                 ansible_cfg_path=ansible_cfg_path,
                 extra_args=extra_args,
                 capture_output=capture_output,
+                search_file_paths=search_file_paths,
             )
 
     raise NotImplementedError
@@ -135,13 +145,31 @@ def _run_test(
     if search_str not in result.stdout:
         msgs.append(f"Can not found the string in stdout. str: '{search_str}'")
 
+    if os.environ.get("ROLY_DEBUG_INTEGRATION_TEST", "0") == "1":
+        print(
+            "\n".join(
+                (
+                    f"Test file: {test_case_file_name}",
+                    f"Return code: {result.returncode}",
+                    "----- STDOUT -----",
+                    result.stdout,
+                    "----- STDERR -----",
+                    result.stderr,
+                    "------------------",
+                )
+            )
+        )
+
     if msgs:
         msg = "\n".join(
             (
                 f"Test file failed: {test_case_file_name}",
                 *msgs,
+                "----- STDOUT -----",
                 result.stdout,
+                "----- STDERR -----",
                 result.stderr,
+                "------------------",
             )
         )
         raise AssertionError(msg)

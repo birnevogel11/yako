@@ -5,20 +5,25 @@ from collections import ChainMap
 from typing import TYPE_CHECKING, Annotated, Any
 
 import ansible
-from pydantic import AfterValidator, BaseModel, ConfigDict
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    ValidationError,
+)
 
 from roly.assert_check import AssertMode, AssertResult, AssertStmt, FileMode
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from typing import Self
+    from typing import Any, Self
 
 
 class MockActionConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     result_dicts: dict[str, Any] = {}
-    files: dict[str, str] = {}
     changed: bool = False
 
     def gen_action(
@@ -125,10 +130,49 @@ class TestTaskConfig(BaseModel):
     should_fail: bool | None = None
 
 
+class CopyFileConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    src: str
+    dest: str
+
+    @classmethod
+    def from_src(cls, src: str) -> Self:
+        return cls(src=src, dest=src)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        if "src" in data and "dest" in data:
+            return cls(src=data["src"], dest=data["dest"])
+        raise ValidationError("CopyFileConfig dict must have 'src' and 'dest' keys")
+
+
+def _parse_copy_file_config_list(value: Any) -> list[CopyFileConfig]:
+    if not isinstance(value, list):
+        raise ValidationError("files must be a list")
+
+    parsed_values = []
+    for item in value:
+        match item:
+            case CopyFileConfig():
+                parsed_values.append(item)
+            case str():
+                parsed_values.append(CopyFileConfig.from_src(item))
+            case dict():
+                parsed_values.append(CopyFileConfig.from_dict(item))
+            case _:
+                raise ValidationError(
+                    "Each item in files list must be either a string or a dict"
+                )
+    return parsed_values
+
+
 class TestCaseGiven(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    files: dict[str, str] = {}
+    files: Annotated[
+        list[CopyFileConfig], BeforeValidator(_parse_copy_file_config_list)
+    ] = []
     extra_vars: dict[str, Any] = {}
     mock_tasks: list[TestTaskConfig] = []
 
@@ -136,7 +180,9 @@ class TestCaseGiven(BaseModel):
     def from_merge(cls, *givens: Self) -> Self:
         return cls.model_validate(
             {
-                "files": dict(ChainMap(*(given.files for given in givens))),
+                "files": list(
+                    itertools.chain.from_iterable(given.files for given in givens)
+                ),
                 "extra_vars": dict(ChainMap(*(given.extra_vars for given in givens))),
                 "mock_tasks": list(
                     itertools.chain.from_iterable(given.mock_tasks for given in givens),
