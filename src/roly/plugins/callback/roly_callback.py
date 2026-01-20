@@ -401,9 +401,10 @@ def _resolve_file_dest_configs(
             raise RolyAnsiblePluginError(
                 "Relative dest path provided without roly_workspace_dir. "
             )
-        new_files.append(
-            CopyFileConfig(src=ori_file.src, dest=str(dest_path.resolve()))
-        )
+        new_dest = str(dest_path.resolve())
+        if ori_file.dest.endswith("/"):
+            new_dest += "/"
+        new_files.append(CopyFileConfig(src=ori_file.src, dest=new_dest))
 
     return new_files
 
@@ -412,20 +413,21 @@ def _copy_files_with_configs(file_configs: list[CopyFileConfig]) -> None:
     for file_config in file_configs:
         src_path = Path(file_config.src)
         dest_path = Path(file_config.dest)
+        msg_file_type = "Unknown"
         if src_path.is_file():
+            msg_file_type = "file"
             dest_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(src_path, dest_path)
         elif src_path.is_dir():
+            msg_file_type = "directory"
             if file_config.dest.endswith("/"):
-                dest_dir = dest_path / src_path.name
-            else:
-                dest_dir = dest_path
+                dest_path = dest_path / src_path.name
 
-            dest_dir.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copytree(src_path, dest_dir, dirs_exist_ok=True)
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(src_path, dest_path, dirs_exist_ok=True)
 
         _display_message_ok(
-            f"Copied file from {src_path} to {dest_path}",
+            f"Copied {msg_file_type} from {src_path} to {dest_path}",
         )
 
 

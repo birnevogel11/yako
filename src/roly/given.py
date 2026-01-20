@@ -138,7 +138,7 @@ class CopyFileConfig(BaseModel):
 
     @classmethod
     def from_src(cls, src: str) -> Self:
-        return cls(src=src, dest=src)
+        return cls(src=src, dest=src if not src.endswith("/") else src.rstrip("/"))
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
