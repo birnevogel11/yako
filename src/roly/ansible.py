@@ -52,11 +52,13 @@ def make_ansible_playbook_cmd(
     roly_workspace_dir: Path,
     roly_test_case_path: Path,
     playbook_path: list[Path],
+    search_file_paths: list[Path],
 ) -> tuple[list[str], dict[str, str]]:
     env = {
         "ANSIBLE_CONFIG": str(ansible_cfg_path),
         "ANSIBLE_STDOUT_CALLBACK": cmd_config.ansible_stdout_callback,
     }
+    search_file_path = ":".join(str(p.resolve()) for p in search_file_paths)
     cmd = [
         str(ansible_playbook_bin),
         "--verbose",
@@ -67,6 +69,8 @@ def make_ansible_playbook_cmd(
         f"{cmd_config.limit}",
         "-e",
         f"roly_workspace_dir={roly_workspace_dir}",
+        "-e",
+        f"roly_search_file_path={search_file_path}",
         "-e",
         f"@{roly_test_case_path}",
         *(cmd_config.extra_args or ()),

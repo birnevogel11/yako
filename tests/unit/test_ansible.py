@@ -82,6 +82,8 @@ def test_make_roly_ansible_config_with_playbook_dir() -> None:
                         "-e",
                         "roly_workspace_dir=/fake-ws",
                         "-e",
+                        "roly_search_file_path=/fake-ws:/fake",
+                        "-e",
                         "@/fake/test-case.yaml",
                         "/fake/playbook.yaml",
                     ],
@@ -112,6 +114,8 @@ def test_make_roly_ansible_config_with_playbook_dir() -> None:
                         "-e",
                         "roly_workspace_dir=/fake-ws",
                         "-e",
+                        "roly_search_file_path=/fake-ws:/fake",
+                        "-e",
                         "@/fake/test-case.yaml",
                         "-e",
                         "fake=fake",
@@ -138,6 +142,7 @@ def test_make_ansible_playbook_cmd(
             roly_workspace_dir="/fake-ws",
             roly_test_case_path="/fake/test-case.yaml",
             playbook_path=[Path("/fake/playbook.yaml")],
+            search_file_paths=[Path("/fake-ws"), Path("/fake")],
         )
         == expected_value
     )

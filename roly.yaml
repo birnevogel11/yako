@@ -1,1 +1,4 @@
 runner_mode: "docker"
+runner:
+  docker:
+    host_roly_repo_dir: "."

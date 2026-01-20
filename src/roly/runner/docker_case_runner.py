@@ -114,8 +114,12 @@ def _make_docker_cmd(
     for path, ct_path in mount_mapping.items():
         cmd.extend(("-v", f"{path}:{ct_path}"))
 
-    if docker_config.host_roly_src_dir:
-        cmd.extend(("-v", f"{docker_config.host_roly_src_dir}:/home/ubuntu/roly"))
+    if docker_config.host_roly_repo_dir:
+        logger.debug(
+            "Mount roly source dir: %s to /home/ubuntu/roly",
+            docker_config.host_roly_repo_dir,
+        )
+        cmd.extend(("-v", f"{docker_config.host_roly_repo_dir}:/home/ubuntu/roly"))
 
     cmd.extend(
         (
@@ -128,6 +132,15 @@ def _make_docker_cmd(
     )
 
     return cmd
+
+
+def _remap_test_case_dir_path(
+    case: TestCase, ct_base_dir: Path = Path("/host_roly")
+) -> tuple[str, str]:
+    host_case_path = str(case.path.parent.resolve())
+    ct_path = ct_base_dir / host_case_path[1:]
+
+    return host_case_path, str(ct_path)
 
 
 class DockerTestCaseRunner:
@@ -177,9 +190,14 @@ class DockerTestCaseRunner:
             case = _convert_test_case_playbook(
                 case, ws_dir, ws_ct_dir, self._playbook_ct_dirs
             )
+            logger.debug("Test case path: %s", case.path)
 
             roly_test_case_path = ws_dir / "test_case.yaml"
             case.dump_roly_callback_config_file(roly_test_case_path)
+
+            host_test_case_dir_path, ct_test_case_dir_path = _remap_test_case_dir_path(
+                case
+            )
 
             ansible_cmd, ansible_cmd_env = make_ansible_playbook_cmd(
                 ansible_playbook_bin=runner_config.ansible_playbook_bin,
@@ -188,6 +206,7 @@ class DockerTestCaseRunner:
                 roly_test_case_path=ws_ct_dir / roly_test_case_path.name,
                 roly_workspace_dir=ws_ct_dir,
                 playbook_path=case.playbooks,
+                search_file_paths=[ws_ct_dir, Path(ct_test_case_dir_path)],
             )
             docker_cmd = _make_docker_cmd(
                 ansible_cmd,
@@ -198,6 +217,7 @@ class DockerTestCaseRunner:
                     {
                         **self._base_mount_mappings,
                         ws_dir: ws_ct_dir,
+                        host_test_case_dir_path: ct_test_case_dir_path,
                     },
                 ),
             )

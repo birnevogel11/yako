@@ -92,6 +92,7 @@ class LocalTestCaseRunner:
                 playbook_path=case.playbooks,
                 roly_test_case_path=roly_test_case_path,
                 roly_workspace_dir=ws_dir,
+                search_file_paths=[ws_dir, case.path.parent],
             )
             logger.debug(
                 "Run command. test_case: %s, cmd: %s",

@@ -20,7 +20,7 @@ from roly.given import CopyFileConfig, TestTaskConfig
 from roly.test_case import TestCase
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Mapping
     from typing import Literal, Self
 
     from ansible.executor.task_result import CallbackTaskResult
@@ -169,8 +169,8 @@ class RolyInternalState(BaseModel):
         )
 
         # Change task name and ignore error state
-        task.task_name = new_task_name
-        task._task_name = new_task_name  # noqa: SLF001
+        task.task_name = new_task_name  # type: ignore[assignment]
+        task._task_name = new_task_name  # noqa: SLF001  # type: ignore[assignment]# type
         task.ignore_errors = new_task_ignore_errors
 
     def _find_task_config(
@@ -278,8 +278,10 @@ def _assert_inputs(task: Task, roly_state: RolyInternalState) -> None:
         _assert_inputs_normal(task, roly_state)
 
 
-def _assert_outputs(task_config: TestTaskConfig, result_dict: dict[str, Any]) -> None:
-    var_templar = Templar(loader=DataLoader(), variables=result_dict)
+def _assert_outputs(
+    task_config: TestTaskConfig, result_dict: Mapping[str, Any]
+) -> None:
+    var_templar = Templar(loader=DataLoader(), variables=result_dict)  # type: ignore[arg-type]
     passed_asserts, failed_asserts = _assert_stmts(
         task_config.assert_outputs,
         var_templar.resolve_variable_expression,
@@ -362,6 +364,7 @@ def _resolve_file_src_configs(
         search_paths = [Path(p) for p in raw_roly_search_file_path.split(":")]
     else:
         search_paths = [Path.cwd(), playbook_path.parent.resolve()]
+    _display_message_ok("Copy file search paths: " + ", ".join(map(str, search_paths)))
 
     resolved_file_configs = []
     for file_config in files:

@@ -170,7 +170,7 @@ class DockerRunnerConfig(BaseModel):
 
     ansible_playbook_bin: Path = Path("/home/ubuntu/app/bin/ansible-playbook")
 
-    host_roly_src_dir: Path | None = None
+    host_roly_repo_dir: Path | None = None
 
     def model_post_init(self, context: Any, /) -> None:
         object.__setattr__(
@@ -178,6 +178,12 @@ class DockerRunnerConfig(BaseModel):
             "ansible_playbook_bin",
             self.roly_venv_dir / "bin" / "ansible-playbook",
         )
+        if self.host_roly_repo_dir:
+            object.__setattr__(
+                self,
+                "host_roly_repo_dir",
+                self.host_roly_repo_dir.expanduser().resolve(),
+            )
 
         return super().model_post_init(context)
 
