@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 class MockActionConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    result_dicts: dict[str, Any] = {}
+    result_dict: dict[str, Any] = {}
     changed: bool = False
 
     def gen_action(
@@ -35,7 +35,7 @@ class MockActionConfig(BaseModel):
             "task_name": new_action_name,
             "original_module_name": original_action_name,
             "consider_changed": self.changed,
-            "result_dict": self.result_dicts,
+            "result_dict": self.result_dict,
         }
         return new_action_name, new_action_name_args
 
