@@ -9,7 +9,7 @@ ROLY_TEST_CASE_CONFIG:
       - name: Create a temp folder
         mock:
           changed: true
-          result_dicts:
+          result_dict:
             path: "/tmp/fake"
   tasks:
     - name: Create a temp folder
