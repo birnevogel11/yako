@@ -76,7 +76,8 @@ class TestCaseAssert(BaseModel):
     def check(self, get_actual_value_func: Callable[[str], Any]) -> AssertResult:
         result = None
         try:
-            result = self._to_assert_stmt(get_actual_value_func).check()
+            actual_value = get_actual_value_func(self.name)
+            result = self._to_assert_stmt(actual_value).check()
         except (KeyError, ansible.errors.AnsibleUndefinedVariable) as err:
             result = self._to_var_not_found_result(err)
         except Exception as err:  # noqa: BLE001
@@ -84,11 +85,9 @@ class TestCaseAssert(BaseModel):
 
         return result
 
-    def _to_assert_stmt(
-        self, get_actual_value_func: Callable[[str], Any]
-    ) -> AssertStmt:
+    def _to_assert_stmt(self, actual_value: Any) -> AssertStmt:
         return AssertStmt(
-            actual=get_actual_value_func(self.name),
+            actual=actual_value,
             expected=self.value,
             mode=self.mode,
             file=self.file,
@@ -98,21 +97,24 @@ class TestCaseAssert(BaseModel):
     def _to_unknown_error_result(
         self, err: Exception, msg: str | None = None
     ) -> AssertResult:
-        msg = (
-            msg
-            or f"Unknown error. assert_stmt: {self}, err: {err}, err_type: {type(err)}"
+        return self._to_error_result(
+            err,
+            f"Unknown error. assert_stmt: {self}, err: {err}, err_type: {type(err)}",
         )
+
+    def _to_var_not_found_result(self, err: Exception) -> AssertResult:
+        return self._to_error_result(
+            err, f"Variable: {self.name} not found, err: {err}"
+        )
+
+    def _to_error_result(self, err: Exception, msg: str) -> AssertResult:
         return AssertResult(
             passed=False,
             actual_value=None,
             expected_value=self.value,
             mode=self.mode,
             err_msg=msg,
-        )
-
-    def _to_var_not_found_result(self, err: Exception) -> AssertResult:
-        return self._to_unknown_error_result(
-            err, f"Variable: {self.name} not found, err: {err}"
+            exception=err,
         )
 
 
