@@ -3,7 +3,11 @@ name = "yako"
 dynamic = ["version"]
 description = "A mock-based testing framework for Ansible playbooks."
 readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.13"
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+]
 dependencies = [
     "ansible>=12.1.0",
     "diskcache>=5.6.3",

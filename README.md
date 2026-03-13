@@ -522,3 +522,8 @@ uvx yako test -v
 # Custom config file
 uvx yako test -c custom_yako.yaml
 ```
+
+## License
+
+Yako is licensed under the GNU General Public License v3.0. See `LICENSE` for the
+full text.
