@@ -36,19 +36,19 @@ class AssertMode(enum.Enum):
 
 MAPPING_ASSERT_FUNCTIONS = {
     AssertMode.Equal: lambda a, e: unittest.TestCase().assertEqual(a, e),  # noqa: PT009
-    AssertMode.NotEqual: lambda a, e: unittest.TestCase().assertNotEqual(a, e),  # noqa: PT009
+    AssertMode.NotEqual: lambda a, e: unittest.TestCase().assertNotEqual(a, e),
     AssertMode.Less: lambda a, e: unittest.TestCase().assertLess(a, e),  # noqa: PT009
-    AssertMode.Greater: lambda a, e: unittest.TestCase().assertGreater(a, e),  # noqa: PT009
-    AssertMode.LessThen: lambda a, e: unittest.TestCase().assertLessEqual(a, e),  # noqa: PT009
-    AssertMode.GreaterThan: lambda a, e: unittest.TestCase().assertGreaterEqual(a, e),  # noqa: PT009
+    AssertMode.Greater: lambda a, e: unittest.TestCase().assertGreater(a, e),
+    AssertMode.LessThen: lambda a, e: unittest.TestCase().assertLessEqual(a, e),
+    AssertMode.GreaterThan: lambda a, e: unittest.TestCase().assertGreaterEqual(a, e),
     AssertMode.In: lambda a, e: unittest.TestCase().assertIn(a, e),  # noqa: PT009
     AssertMode.NotIn: lambda a, e: unittest.TestCase().assertNotIn(a, e),  # noqa: PT009
-    AssertMode.IsNone: lambda a, e: unittest.TestCase().assertIsNone(a),  # noqa: PT009, ARG005
-    AssertMode.IsNotNone: lambda a, e: unittest.TestCase().assertIsNotNone(a),  # noqa: PT009, ARG005
-    AssertMode.IsTrue: lambda a, e: unittest.TestCase().assertTrue(a),  # noqa: PT009, ARG005
-    AssertMode.IsFalse: lambda a, e: unittest.TestCase().assertFalse(a),  # noqa: PT009, ARG005
-    AssertMode.IsNotTrue: lambda a, e: unittest.TestCase().assertFalse(a),  # noqa: PT009, ARG005
-    AssertMode.IsNotFalse: lambda a, e: unittest.TestCase().assertTrue(a),  # noqa: PT009, ARG005
+    AssertMode.IsNone: lambda a, e: unittest.TestCase().assertIsNone(a),
+    AssertMode.IsNotNone: lambda a, e: unittest.TestCase().assertIsNotNone(a),
+    AssertMode.IsTrue: lambda a, e: unittest.TestCase().assertTrue(a),
+    AssertMode.IsFalse: lambda a, e: unittest.TestCase().assertFalse(a),
+    AssertMode.IsNotTrue: lambda a, e: unittest.TestCase().assertFalse(a),
+    AssertMode.IsNotFalse: lambda a, e: unittest.TestCase().assertTrue(a),
 }
 
 
@@ -85,7 +85,10 @@ class AssertStmt(BaseModel):
             )
             and self.expected is not None
         ):
-            msg = f"expected should not have value in these modes. actual: {self.actual}, mode: {self.mode}"
+            msg = (
+                "expected should not have value in these modes. "
+                f"actual: {self.actual}, mode: {self.mode}"
+            )
             raise ValueError(msg)
 
         return self

@@ -14,6 +14,7 @@ from pydantic import (
 )
 
 from roly.assert_check import AssertMode, AssertResult, AssertStmt, FileMode
+from roly.utils import not_test
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -167,6 +168,7 @@ def _parse_copy_file_config_list(value: Any) -> list[CopyFileConfig]:
     return parsed_values
 
 
+@not_test
 class TestCaseGiven(BaseModel):
     model_config = ConfigDict(frozen=True)
 
