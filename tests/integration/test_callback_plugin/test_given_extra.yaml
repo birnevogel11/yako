@@ -1,7 +1,7 @@
-ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+YAKO_INTERNAL_INTEGRATION_TEST_CONFIG:
   search_keyword: "whats_life_mean_to_you"
 
-ROLY_TEST_CASE_CONFIG:
+YAKO_TEST_CASE_CONFIG:
   name: "test_given_extra"
   path: "fake"
   given:

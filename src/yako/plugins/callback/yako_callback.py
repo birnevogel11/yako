@@ -16,8 +16,8 @@ from ansible.template import Templar
 from ansible.utils.display import Display
 from pydantic import BaseModel, ConfigDict, ValidationError
 
-from roly.given import CopyFileConfig, TestTaskConfig
-from roly.test_case import TestCase
+from yako.given import CopyFileConfig, TestTaskConfig
+from yako.test_case import TestCase
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Mapping
@@ -28,14 +28,14 @@ if TYPE_CHECKING:
     from ansible.playbook.play import Play
     from ansible.playbook.task import Task
 
-    from roly.assert_check import AssertResult
-    from roly.given import TestCaseAssert, TestCaseGiven
+    from yako.assert_check import AssertResult
+    from yako.given import TestCaseAssert, TestCaseGiven
 
 global_display = Display()
 
 
 def _display_message_ok(msg: str, color=C.COLOR_OK) -> None:
-    global_display.display(msg=f"[ROLY]: {msg}", color=color)
+    global_display.display(msg=f"[YAKO]: {msg}", color=color)
 
 
 def _get_task_playbook_vars(
@@ -49,29 +49,29 @@ def _get_task_playbook_vars(
     return variables
 
 
-class RolyAnsiblePluginError(Exception):
+class YakoAnsiblePluginError(Exception):
     def __init__(self, message: str, exit_code: int = 1) -> None:
         super().__init__(message)
         if exit_code:
-            global_display.display(msg=f"[ROLY_ERROR]: {message}", color=C.COLOR_ERROR)
+            global_display.display(msg=f"[YAKO_ERROR]: {message}", color=C.COLOR_ERROR)
         else:
-            global_display.display(msg=f"[ROLY]: {message}", color=C.COLOR_OK)
+            global_display.display(msg=f"[YAKO]: {message}", color=C.COLOR_OK)
         sys.exit(exit_code)
 
 
-class RolyTestConfig(TestCase):
+class YakoTestConfig(TestCase):
     model_config = ConfigDict(frozen=True)
 
-    ROLY_TEST_CONFIG_KEY: ClassVar[str] = "ROLY_TEST_CASE_CONFIG"
+    YAKO_TEST_CONFIG_KEY: ClassVar[str] = "YAKO_TEST_CASE_CONFIG"
 
     # These variables are from ansible, not found input config
     play_extra_vars_base: dict[str, Any] = {}  # noqa: RUF012
 
     @classmethod
     def from_playbook(cls, play_extra_vars_base: dict[str, Any]) -> Self:
-        if not (raw_test_config := play_extra_vars_base.get(cls.ROLY_TEST_CONFIG_KEY)):
-            msg = f"{cls.ROLY_TEST_CONFIG_KEY} not found!"
-            raise RolyAnsiblePluginError(msg)
+        if not (raw_test_config := play_extra_vars_base.get(cls.YAKO_TEST_CONFIG_KEY)):
+            msg = f"{cls.YAKO_TEST_CONFIG_KEY} not found!"
+            raise YakoAnsiblePluginError(msg)
 
         if extra_vars := raw_test_config.get("given", {}).get("extra_vars"):
             # Merge extra_vars into play_extra_vars_base for variable templating
@@ -87,7 +87,7 @@ class RolyTestConfig(TestCase):
             raw_test_config.update(render_raw_test_config)
         except Exception as err:  # noqa: BLE001
             msg = f"Failed to expand config vars. err: {err}"
-            raise RolyAnsiblePluginError(msg)  # noqa: B904
+            raise YakoAnsiblePluginError(msg)  # noqa: B904
 
         raw_test_config["play_extra_vars_base"] = play_extra_vars_base
 
@@ -112,7 +112,7 @@ class VariableTemplar:
         host: Host,
         task: Task,
         task_config: TestTaskConfig,
-        config: RolyTestConfig,
+        config: YakoTestConfig,
     ) -> None:
         self._host = host
         self._task = task
@@ -136,26 +136,26 @@ class VariableTemplar:
         )
 
 
-class RolyInternalState(BaseModel):
+class YakoInternalState(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    test_config: RolyTestConfig
+    test_config: YakoTestConfig
     task_config: TestTaskConfig | None = None
     var_templar: VariableTemplar | None = None
-    roly_workspace_dir: Path | None = None
+    yako_workspace_dir: Path | None = None
 
     @classmethod
     def from_test_config(
-        cls, test_config: RolyTestConfig, play_extra_vars: dict[str, Any]
+        cls, test_config: YakoTestConfig, play_extra_vars: dict[str, Any]
     ) -> Self:
-        roly_workspace_dir = play_extra_vars.get("roly_workspace_dir")
-        if roly_workspace_dir:
-            roly_workspace_dir = Path(roly_workspace_dir)
+        yako_workspace_dir = play_extra_vars.get("yako_workspace_dir")
+        if yako_workspace_dir:
+            yako_workspace_dir = Path(yako_workspace_dir)
 
-        return cls(test_config=test_config, roly_workspace_dir=roly_workspace_dir)
+        return cls(test_config=test_config, yako_workspace_dir=yako_workspace_dir)
 
     def assign_current_task_config(self, host: Host, task: Task) -> None:
-        """Find and assign the roly task config and templar.
+        """Find and assign the yako task config and templar.
 
         Caution: It changes the `task` argument in place.
         """
@@ -199,7 +199,7 @@ class RolyInternalState(BaseModel):
 
 
 def _mock_task(task: Task, task_config: TestTaskConfig) -> None:
-    """Replace the task action with the roly_mock module and set its arguments.
+    """Replace the task action with the yako_mock module and set its arguments.
 
     Caution: It changes the `task` argument in place.
     """
@@ -236,9 +236,9 @@ def _get_task_args(task_args: dict[str, Any], name: str) -> Any:
     return task_args[name]
 
 
-def _assert_inputs_loop(task: Task, roly_state: RolyInternalState) -> None:
-    if not (task_config := roly_state.task_config) or not (
-        var_templar := roly_state.var_templar
+def _assert_inputs_loop(task: Task, yako_state: YakoInternalState) -> None:
+    if not (task_config := yako_state.task_config) or not (
+        var_templar := yako_state.var_templar
     ):
         return
 
@@ -257,9 +257,9 @@ def _assert_inputs_loop(task: Task, roly_state: RolyInternalState) -> None:
     _report_assert(task.name, passed_asserts, failed_asserts, "inputs_loop")
 
 
-def _assert_inputs_normal(task: Task, roly_state: RolyInternalState) -> None:
-    if not (task_config := roly_state.task_config) or not (
-        var_templar := roly_state.var_templar
+def _assert_inputs_normal(task: Task, yako_state: YakoInternalState) -> None:
+    if not (task_config := yako_state.task_config) or not (
+        var_templar := yako_state.var_templar
     ):
         return
 
@@ -271,11 +271,11 @@ def _assert_inputs_normal(task: Task, roly_state: RolyInternalState) -> None:
     _report_assert(task.name, passed_asserts, failed_asserts, "inputs")
 
 
-def _assert_inputs(task: Task, roly_state: RolyInternalState) -> None:
+def _assert_inputs(task: Task, yako_state: YakoInternalState) -> None:
     if task.loop:
-        _assert_inputs_loop(task, roly_state)
+        _assert_inputs_loop(task, yako_state)
     else:
-        _assert_inputs_normal(task, roly_state)
+        _assert_inputs_normal(task, yako_state)
 
 
 def _assert_outputs(
@@ -305,7 +305,7 @@ def _report_assert(
             f"Failed to assert {state}. task: {task_name}, "
             f"failed_asserts: {failed_msgs}"
         )
-        raise RolyAnsiblePluginError(msg)
+        raise YakoAnsiblePluginError(msg)
 
 
 def _assert_task_state(
@@ -340,13 +340,13 @@ def _assert_task_state(
         and task_config.should_fail == should_fail
         and rescue_fail
     ):
-        raise RolyAnsiblePluginError(
+        raise YakoAnsiblePluginError(
             "Task failed as expected. Stop here with exit code 0", exit_code=0
         )
 
     if err_msgs:
         msg = "Check task state error: " + "\n".join(err_msgs)
-        raise RolyAnsiblePluginError(msg)
+        raise YakoAnsiblePluginError(msg)
 
 
 def _get_playbook_path(play: Play) -> Path:
@@ -360,8 +360,8 @@ def _resolve_file_src_configs(
     files: list[CopyFileConfig],
     play_extra_vars: dict[str, Any],
 ) -> list[CopyFileConfig]:
-    if raw_roly_search_file_path := play_extra_vars.get("roly_search_file_path"):
-        search_paths = [Path(p) for p in raw_roly_search_file_path.split(":")]
+    if raw_yako_search_file_path := play_extra_vars.get("yako_search_file_path"):
+        search_paths = [Path(p) for p in raw_yako_search_file_path.split(":")]
     else:
         search_paths = [Path.cwd(), playbook_path.parent.resolve()]
     _display_message_ok("Copy file search paths: " + ", ".join(map(str, search_paths)))
@@ -382,7 +382,7 @@ def _resolve_file_src_configs(
                 f"Source file for copy not found. src: {file_config.src}, "
                 f"search_paths: {search_paths}"
             )
-            raise RolyAnsiblePluginError(msg)
+            raise YakoAnsiblePluginError(msg)
 
         resolved_file_configs.append(
             CopyFileConfig(src=str(src_path), dest=file_config.dest)
@@ -392,17 +392,17 @@ def _resolve_file_src_configs(
 
 
 def _resolve_file_dest_configs(
-    files: list[CopyFileConfig], roly_workspace_dir: Path | None = None
+    files: list[CopyFileConfig], yako_workspace_dir: Path | None = None
 ) -> list[CopyFileConfig]:
     new_files = []
     for ori_file in files:
         if Path(ori_file.dest).is_absolute():
             dest_path = Path(ori_file.dest)
-        elif roly_workspace_dir:
-            dest_path = roly_workspace_dir / ori_file.dest
+        elif yako_workspace_dir:
+            dest_path = yako_workspace_dir / ori_file.dest
         else:
-            raise RolyAnsiblePluginError(
-                "Relative dest path provided without roly_workspace_dir. "
+            raise YakoAnsiblePluginError(
+                "Relative dest path provided without yako_workspace_dir. "
             )
         new_dest = str(dest_path.resolve())
         if ori_file.dest.endswith("/"):
@@ -438,13 +438,13 @@ def _copy_test_case_files(
     playbook_path: Path,
     given: TestCaseGiven,
     play_extra_vars: dict[str, Any],
-    roly_workspace_dir: Path | None = None,
+    yako_workspace_dir: Path | None = None,
 ) -> None:
     copy_configs = _resolve_file_src_configs(
         playbook_path, given.files, play_extra_vars
     )
     copy_configs = _resolve_file_dest_configs(
-        copy_configs, roly_workspace_dir=roly_workspace_dir
+        copy_configs, yako_workspace_dir=yako_workspace_dir
     )
     _copy_files_with_configs(copy_configs)
 
@@ -453,43 +453,43 @@ class CallbackModule(CallbackBase):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self._roly: RolyInternalState = None  # type: ignore[assignment]
+        self._yako: YakoInternalState = None  # type: ignore[assignment]
 
     def v2_playbook_on_play_start(self, play: Play) -> Play:
         play_extra_vars = play.get_variable_manager().extra_vars
         try:
-            test_config = RolyTestConfig.from_playbook(play_extra_vars)
+            test_config = YakoTestConfig.from_playbook(play_extra_vars)
         except ValidationError as err:
-            msg = f"Invalid Roly test case config. err: {err.errors()}"
-            raise RolyAnsiblePluginError(msg)  # noqa: B904
+            msg = f"Invalid Yako test case config. err: {err.errors()}"
+            raise YakoAnsiblePluginError(msg)  # noqa: B904
 
         play_extra_vars.update(test_config.given.extra_vars)
 
-        self._roly = RolyInternalState.from_test_config(test_config, play_extra_vars)
+        self._yako = YakoInternalState.from_test_config(test_config, play_extra_vars)
         _copy_test_case_files(
             playbook_path=_get_playbook_path(play),
-            given=self._roly.test_config.given,
+            given=self._yako.test_config.given,
             play_extra_vars=play_extra_vars,
-            roly_workspace_dir=self._roly.roly_workspace_dir,
+            yako_workspace_dir=self._yako.yako_workspace_dir,
         )
 
         _display_message_ok(
-            f"Start Roly with test case - {self._roly.test_config.name}, "
-            f"Roly workspace dir: {self._roly.roly_workspace_dir}",
+            f"Start Yako with test case - {self._yako.test_config.name}, "
+            f"Yako workspace dir: {self._yako.yako_workspace_dir}",
         )
 
         return play
 
     def v2_runner_on_start(self, host: Host, task: Task) -> None:
-        self._roly.assign_current_task_config(host, task)
+        self._yako.assign_current_task_config(host, task)
 
-        if (task_config := self._roly.task_config) and (
-            var_templar := self._roly.var_templar
+        if (task_config := self._yako.task_config) and (
+            var_templar := self._yako.var_templar
         ):
             _display_message_ok(
                 f"Runner start: {task}, on host {host}, name: {task.name}"
             )
-            _display_message_ok(f"{self._roly.task_config}")
+            _display_message_ok(f"{self._yako.task_config}")
 
             # Apply extra variables in task level. The mechanism does not
             # apply to the case
@@ -506,7 +506,7 @@ class CallbackModule(CallbackBase):
 
             # Check inputs
             if task_config.assert_inputs:
-                _assert_inputs(task, self._roly)
+                _assert_inputs(task, self._yako)
 
             # Mock the task
             if task_config.mock:
@@ -517,7 +517,7 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_ok(self, result: CallbackTaskResult, *args, **kwargs) -> None:
         self._display.debug("Run v2_runner_on_ok")
 
-        if task_config := self._roly.task_config:
+        if task_config := self._yako.task_config:
             _assert_task_state(
                 task_config,
                 should_be_changed=result.is_changed(),
@@ -531,7 +531,7 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_failed(self, result: CallbackTaskResult, *args, **kwargs) -> None:
         self._display.debug("Run v2_runner_on_failed")
 
-        if task_config := self._roly.task_config:
+        if task_config := self._yako.task_config:
             _assert_task_state(
                 task_config, should_be_skipped=False, should_fail=True, rescue_fail=True
             )
@@ -539,5 +539,5 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_skipped(self, result: CallbackTaskResult, **kwargs) -> None:
         self._display.debug("Run v2_runner_on_skipped")
 
-        if task_config := self._roly.task_config:
+        if task_config := self._yako.task_config:
             _assert_task_state(task_config, should_be_skipped=True, should_fail=False)

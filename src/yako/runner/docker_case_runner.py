@@ -7,17 +7,17 @@ from typing import TYPE_CHECKING, NewType, cast
 
 import yaml
 
-from roly.ansible import make_ansible_playbook_cmd, make_roly_ansible_config
-from roly.resolve import resolve_roles_path
-from roly.runner.utils import run_command
-from roly.test_case import make_content_playbook
+from yako.ansible import make_ansible_playbook_cmd, make_yako_ansible_config
+from yako.resolve import resolve_roles_path
+from yako.runner.utils import run_command
+from yako.test_case import make_content_playbook
 
 if TYPE_CHECKING:
     import subprocess
     from collections.abc import Iterable
 
-    from roly.config import DockerRunnerConfig, RolyConfig
-    from roly.test_case import TestCase
+    from yako.config import DockerRunnerConfig, YakoConfig
+    from yako.test_case import TestCase
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 ContainerPath = NewType("ContainerPath", Path)
 
 
-def _get_all_playbook_dirs(config: RolyConfig) -> list[Path]:
+def _get_all_playbook_dirs(config: YakoConfig) -> list[Path]:
     base_dirs = [
         (
             path.expanduser().resolve()
@@ -38,7 +38,7 @@ def _get_all_playbook_dirs(config: RolyConfig) -> list[Path]:
 
 
 def _create_mount_mapping(
-    host_path: Iterable[Path], container_prefix: Path = Path("/host_roly")
+    host_path: Iterable[Path], container_prefix: Path = Path("/host_yako")
 ) -> dict[Path, ContainerPath]:
     return {
         path.resolve(): ContainerPath(container_prefix / str(path.resolve())[1:])
@@ -53,9 +53,9 @@ def _create_container_ansible_config(
 ) -> Path:
     cfg_path = output_base_dir / "ansible.cfg"
 
-    make_roly_ansible_config(
-        base_dir=config.roly_src_dir,
-        python_bin=str(config.roly_venv_dir / "bin" / "python"),
+    make_yako_ansible_config(
+        base_dir=config.yako_src_dir,
+        python_bin=str(config.yako_venv_dir / "bin" / "python"),
         roles_path=[str(path) for path in roles_ct_path],
         output_path=cfg_path,
     )
@@ -114,12 +114,12 @@ def _make_docker_cmd(
     for path, ct_path in mount_mapping.items():
         cmd.extend(("-v", f"{path}:{ct_path}"))
 
-    if docker_config.host_roly_repo_dir:
+    if docker_config.host_yako_repo_dir:
         logger.debug(
-            "Mount roly source dir: %s to /home/ubuntu/roly",
-            docker_config.host_roly_repo_dir,
+            "Mount yako source dir: %s to /home/ubuntu/yako",
+            docker_config.host_yako_repo_dir,
         )
-        cmd.extend(("-v", f"{docker_config.host_roly_repo_dir}:/home/ubuntu/roly"))
+        cmd.extend(("-v", f"{docker_config.host_yako_repo_dir}:/home/ubuntu/yako"))
 
     cmd.extend(
         (
@@ -135,7 +135,7 @@ def _make_docker_cmd(
 
 
 def _remap_test_case_dir_path(
-    case: TestCase, ct_base_dir: Path = Path("/host_roly")
+    case: TestCase, ct_base_dir: Path = Path("/host_yako")
 ) -> tuple[str, str]:
     host_case_path = str(case.path.parent.resolve())
     ct_path = ct_base_dir / host_case_path[1:]
@@ -144,7 +144,7 @@ def _remap_test_case_dir_path(
 
 
 class DockerTestCaseRunner:
-    def __init__(self, config: RolyConfig) -> None:
+    def __init__(self, config: YakoConfig) -> None:
         self._config = config
         self._base_mount_mappings: dict[Path, ContainerPath] = {}
         self._ansible_cfg_path: Path = None  # type: ignore[assignment]
@@ -154,7 +154,7 @@ class DockerTestCaseRunner:
     def _update_internal_path_state(self, ansible_cfg_path: Path) -> None:
         self._ansible_cfg_path = ansible_cfg_path
         self._base_mount_mappings[self._ansible_cfg_path.parent] = ContainerPath(
-            Path("/host_roly_base")
+            Path("/host_yako_base")
         )
         self._ansible_cfg_ct_path = (
             self._base_mount_mappings[self._ansible_cfg_path.parent]
@@ -192,8 +192,8 @@ class DockerTestCaseRunner:
             )
             logger.debug("Test case path: %s", case.path)
 
-            roly_test_case_path = ws_dir / "test_case.yaml"
-            case.dump_roly_callback_config_file(roly_test_case_path)
+            yako_test_case_path = ws_dir / "test_case.yaml"
+            case.dump_yako_callback_config_file(yako_test_case_path)
 
             host_test_case_dir_path, ct_test_case_dir_path = _remap_test_case_dir_path(
                 case
@@ -203,8 +203,8 @@ class DockerTestCaseRunner:
                 ansible_playbook_bin=runner_config.ansible_playbook_bin,
                 ansible_cfg_path=self._ansible_cfg_ct_path,
                 cmd_config=self._config.ansible.ansible_playbook,
-                roly_test_case_path=ws_ct_dir / roly_test_case_path.name,
-                roly_workspace_dir=ws_ct_dir,
+                yako_test_case_path=ws_ct_dir / yako_test_case_path.name,
+                yako_workspace_dir=ws_ct_dir,
                 playbook_path=case.playbooks,
                 search_file_paths=[ws_ct_dir, Path(ct_test_case_dir_path)],
             )

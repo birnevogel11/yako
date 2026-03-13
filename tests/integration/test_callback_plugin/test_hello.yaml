@@ -1,7 +1,7 @@
-ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+YAKO_INTERNAL_INTEGRATION_TEST_CONFIG:
   search_keyword: "Hello, world!"
 
-ROLY_TEST_CASE_CONFIG:
+YAKO_TEST_CASE_CONFIG:
   name: "test_basic"
   path: "fake"
   tasks:

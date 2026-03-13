@@ -1,9 +1,9 @@
-ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+YAKO_INTERNAL_INTEGRATION_TEST_CONFIG:
   search_keyword: |
-    [ROLY]: should_fail state check ok. expected_state: True
-    [ROLY]: Task failed as expected. Stop here with exit code 0
+    [YAKO]: should_fail state check ok. expected_state: True
+    [YAKO]: Task failed as expected. Stop here with exit code 0
 
-ROLY_TEST_CASE_CONFIG:
+YAKO_TEST_CASE_CONFIG:
   name: "test_should_fail"
   path: "fake"
   given:

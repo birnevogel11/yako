@@ -1,7 +1,7 @@
-ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
-  search_keyword: "Roly Mock module called. Task name: roly_mock, Original module: tempfile"
+YAKO_INTERNAL_INTEGRATION_TEST_CONFIG:
+  search_keyword: "Yako Mock module called. Task name: yako_mock, Original module: tempfile"
 
-ROLY_TEST_CASE_CONFIG:
+YAKO_TEST_CASE_CONFIG:
   name: "test_mock_changed"
   path: "fake"
   given:
@@ -19,7 +19,7 @@ ROLY_TEST_CASE_CONFIG:
       register: tmp_result
 
     - name: Assert result
-      roly_assert:
+      yako_assert:
         stmts:
           - actual: "{{ tmp_result.path }}"
             expected: "/tmp/fake"

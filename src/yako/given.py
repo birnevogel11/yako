@@ -13,8 +13,8 @@ from pydantic import (
     ValidationError,
 )
 
-from roly.assert_check import AssertMode, AssertResult, AssertStmt, FileMode
-from roly.utils import not_test
+from yako.assert_check import AssertMode, AssertResult, AssertStmt, FileMode
+from yako.utils import not_test
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -30,7 +30,7 @@ class MockActionConfig(BaseModel):
     def gen_action(
         self, original_action_name: str | None = None
     ) -> tuple[str, dict[str, Any]]:
-        new_action_name = "roly_mock"
+        new_action_name = "yako_mock"
         new_action_name_args = {
             "task_name": new_action_name,
             "original_module_name": original_action_name,

@@ -1,7 +1,7 @@
-ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
-  search_keyword: "File hello.txt exists in roly workspace."
+YAKO_INTERNAL_INTEGRATION_TEST_CONFIG:
+  search_keyword: "File hello.txt exists in yako workspace."
 
-ROLY_TEST_CASE_CONFIG:
+YAKO_TEST_CASE_CONFIG:
   name: "test_copy_file_basic"
   path: "fake"
   given:
@@ -18,45 +18,45 @@ ROLY_TEST_CASE_CONFIG:
       - src: "hello.txt"
         dest: "{{ tmp_dest_folder_name }}/copy_of_hello.txt"
   tasks:
-    - name: Show roly workspace
+    - name: Show yako workspace
       debug:
-        msg: "{{ roly_workspace_dir }}"
+        msg: "{{ yako_workspace_dir }}"
 
     - block:
         - name: Check file exists in workspace
           stat:
-            path: "{{ roly_workspace_dir }}/hello.txt"
+            path: "{{ yako_workspace_dir }}/hello.txt"
           register: hello_stat
 
         - name: Assert file exists in workspace
           assert:
             that:
               - hello_stat.stat.exists
-            success_msg: "File hello.txt exists in roly workspace."
+            success_msg: "File hello.txt exists in yako workspace."
 
     - block:
         - name: Check file exists in workspace
           stat:
-            path: "{{ roly_workspace_dir }}/copy_of_hello.txt"
+            path: "{{ yako_workspace_dir }}/copy_of_hello.txt"
           register: hello_stat
 
         - name: Assert file exists in workspace
           assert:
             that:
               - hello_stat.stat.exists
-            success_msg: "File hello.txt exists in roly workspace."
+            success_msg: "File hello.txt exists in yako workspace."
 
     - block:
         - name: Check file exists in workspace
           stat:
-            path: "{{ roly_workspace_dir }}/nested/copy_of_hello.txt"
+            path: "{{ yako_workspace_dir }}/nested/copy_of_hello.txt"
           register: hello_stat
 
         - name: Assert file exists in workspace
           assert:
             that:
               - hello_stat.stat.exists
-            success_msg: "File hello.txt exists in roly workspace."
+            success_msg: "File hello.txt exists in yako workspace."
 
     - block:
         - name: Check file exists in workspace
@@ -68,12 +68,12 @@ ROLY_TEST_CASE_CONFIG:
           assert:
             that:
               - hello_stat.stat.exists
-            success_msg: "File hello.txt exists in roly workspace."
+            success_msg: "File hello.txt exists in yako workspace."
 
     - block:
         - name: Check file exists in workspace
           stat:
-            path: "{{ roly_workspace_dir }}/{{ tmp_dest_folder_name }}/\
+            path: "{{ yako_workspace_dir }}/{{ tmp_dest_folder_name }}/\
               copy_of_hello.txt"
           register: hello_stat
 
@@ -81,4 +81,4 @@ ROLY_TEST_CASE_CONFIG:
           assert:
             that:
               - hello_stat.stat.exists
-            success_msg: "File hello.txt exists in roly workspace."
+            success_msg: "File hello.txt exists in yako workspace."

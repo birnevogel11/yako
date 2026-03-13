@@ -1,8 +1,8 @@
-ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+YAKO_INTERNAL_INTEGRATION_TEST_CONFIG:
   # is_passed: false
   search_keyword: ""
 
-ROLY_TEST_CASE_CONFIG:
+YAKO_TEST_CASE_CONFIG:
   name: "test_task_extra_vars"
   path: "fake"
   given:

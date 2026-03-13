@@ -2,7 +2,7 @@ import contextlib
 import os
 from pathlib import Path
 
-from roly.config import RolyInputConfig, RunnerMode
+from yako.config import YakoInputConfig, RunnerMode
 
 
 @contextlib.contextmanager
@@ -17,17 +17,17 @@ def cd(path: Path) -> None:
 
 
 def test_load_default_config() -> None:
-    config = RolyInputConfig()
+    config = YakoInputConfig()
     print(config)
 
 
 def test_load_config(tmp_path: Path) -> None:
-    config_path = tmp_path / "roly.yaml"
+    config_path = tmp_path / "yako.yaml"
     config_path.write_text("runner_mode: local")
 
-    config_path = tmp_path / "roly_local.yaml"
+    config_path = tmp_path / "yako_local.yaml"
     config_path.write_text("runner_mode: docker")
 
     with cd(tmp_path):
-        config = RolyInputConfig(runner_mode=RunnerMode.Local)
+        config = YakoInputConfig(runner_mode=RunnerMode.Local)
         assert config.runner_mode.value == "local"

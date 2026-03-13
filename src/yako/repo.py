@@ -9,7 +9,7 @@ from diskcache import Cache
 from git import Repo
 from pydantic import BaseModel, ConfigDict, Field, NaiveDatetime
 
-from roly.config import GitUri
+from yako.config import GitUri
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class RepoCacheEntry(BaseModel):
 
 class RepoCache:
     def __init__(self, base_dir: Path | None = None) -> None:
-        self._base_dir = Path("~/.cache/roly").expanduser()
+        self._base_dir = Path("~/.cache/yako").expanduser()
         self._repo_base_dir: Path = None  # type: ignore[assignment]
         self._cache: Cache = None  # type: ignore[assignment]
         self._is_init = False
@@ -38,12 +38,12 @@ class RepoCache:
         if self._is_init:
             return
 
-        if raw_path := os.environ.get("ROLY_REPO_CACHE_DIR"):
+        if raw_path := os.environ.get("YAKO_REPO_CACHE_DIR"):
             self._base_dir = Path(raw_path).expanduser().resolve()
         self._base_dir.mkdir(parents=True, exist_ok=True)
         self._repo_base_dir = self._base_dir / "repos"
         self._repo_base_dir.mkdir(parents=True, exist_ok=True)
-        self._cache = Cache(self._base_dir / "roly_cache_db")
+        self._cache = Cache(self._base_dir / "yako_cache_db")
 
         self.is_init = True
 
@@ -88,8 +88,8 @@ class RepoPathResolver:
         The resolver does not support branch for now.
 
         Input Patterns:
-            git@github.com:birnevogel11/roly.git
-            http://github.com/birnevogel11/roly.git
+            git@github.com:birnevogel11/yako.git
+            http://github.com/birnevogel11/yako.git
         """
         if isinstance(repo_uri, str):
             repo_uri = GitUri.from_raw(repo_uri)

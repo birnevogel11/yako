@@ -1,7 +1,7 @@
-ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
-  search_keyword: "[ROLY]: mock module - Before: 'tempfile' Now: 'set_fact' with custom action"
+YAKO_INTERNAL_INTEGRATION_TEST_CONFIG:
+  search_keyword: "[YAKO]: mock module - Before: 'tempfile' Now: 'set_fact' with custom action"
 
-ROLY_TEST_CASE_CONFIG:
+YAKO_TEST_CASE_CONFIG:
   name: "test_mock_custom"
   path: "fake"
   given:
@@ -19,6 +19,6 @@ ROLY_TEST_CASE_CONFIG:
       register: tmp_result
 
     - name: Assert mock
-      roly_assert:
+      yako_assert:
         actual: "{{ msg }}"
         expected: "Hello fake"

@@ -7,17 +7,17 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
-from roly.consts import ROLY_TEST_CONFIG_KEY
-from roly.given import TestCaseGiven
-from roly.utils import not_test
-from roly.yaml import safe_dump
+from yako.consts import YAKO_TEST_CONFIG_KEY
+from yako.given import TestCaseGiven
+from yako.utils import not_test
+from yako.yaml import safe_dump
 
 if TYPE_CHECKING:
     import subprocess
     from typing import Self
 
-    from roly.config import RolyConfig
-    from roly.test_module import TestModuleInputConfig
+    from yako.config import YakoConfig
+    from yako.test_module import TestModuleInputConfig
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +122,7 @@ class TestCase(BaseModel):
     @classmethod
     def from_input_config(
         cls,
-        config: RolyConfig,
+        config: YakoConfig,
         module_config: TestModuleInputConfig,
         case_config: TestCaseInputConfig,
     ) -> list[Self]:
@@ -171,8 +171,8 @@ class TestCase(BaseModel):
 
         return self
 
-    def dump_roly_callback_config_file(self, output_path: Path) -> None:
-        output_path.write_text(safe_dump({ROLY_TEST_CONFIG_KEY: self.model_dump()}))
+    def dump_yako_callback_config_file(self, output_path: Path) -> None:
+        output_path.write_text(safe_dump({YAKO_TEST_CONFIG_KEY: self.model_dump()}))
 
     def is_match(self, filter_key: str) -> bool:
         return filter_key in self.display_name

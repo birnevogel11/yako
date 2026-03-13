@@ -3,11 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from roly.config import RepoRoleConfig
-from roly.repo import RepoPathResolver
+from yako.config import RepoRoleConfig
+from yako.repo import RepoPathResolver
 
 if TYPE_CHECKING:
-    from roly.config import AnsibleConfig
+    from yako.config import AnsibleConfig
 
 
 def resolve_roles_path(ansible_config: AnsibleConfig) -> list[Path]:

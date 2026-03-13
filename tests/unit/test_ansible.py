@@ -3,12 +3,12 @@ from pathlib import Path
 import pytest
 from inline_snapshot import snapshot
 
-from roly.ansible import make_ansible_playbook_cmd, make_roly_ansible_config
-from roly.config import AnsiblePlaybookCommandConfig
+from yako.ansible import make_ansible_playbook_cmd, make_yako_ansible_config
+from yako.config import AnsiblePlaybookCommandConfig
 
 
 @pytest.mark.parametrize(
-    ("enable_roly_callback", "expected_config"),
+    ("enable_yako_callback", "expected_config"),
     [
         (
             True,
@@ -18,7 +18,7 @@ from roly.config import AnsiblePlaybookCommandConfig
 library = /no-such-dir/plugins/module
 callback_plugins = /no-such-dir/plugins/callback
 interpreter_python = /no-such/python3
-callbacks_enabled = roly_callback
+callbacks_enabled = yako_callback
 
 """,
             ),
@@ -37,13 +37,13 @@ interpreter_python = /no-such/python3
         ),
     ],
 )
-def test_make_roly_ansible_config_write_file(
-    tmp_path: Path, enable_roly_callback: bool, expected_config: str
+def test_make_yako_ansible_config_write_file(
+    tmp_path: Path, enable_yako_callback: bool, expected_config: str
 ) -> None:
     ansible_config_path = tmp_path / "test_ansible.cfg"
 
-    make_roly_ansible_config(
-        enable_roly_callback=enable_roly_callback,
+    make_yako_ansible_config(
+        enable_yako_callback=enable_yako_callback,
         base_dir=Path("/no-such-dir"),
         python_bin="/no-such/python3",
         output_path=ansible_config_path,
@@ -52,14 +52,14 @@ def test_make_roly_ansible_config_write_file(
     assert ansible_config_path.read_text() == expected_config
 
 
-def test_make_roly_ansible_config_with_roles_path() -> None:
-    config = make_roly_ansible_config(roles_path=["/path/to/role1", "/path/to/role2"])
+def test_make_yako_ansible_config_with_roles_path() -> None:
+    config = make_yako_ansible_config(roles_path=["/path/to/role1", "/path/to/role2"])
 
     assert config["defaults"]["roles_path"] == snapshot("/path/to/role1:/path/to/role2")
 
 
-def test_make_roly_ansible_config_with_playbook_dir() -> None:
-    config = make_roly_ansible_config(playbook_dir=Path("/path/to/playbooks"))
+def test_make_yako_ansible_config_with_playbook_dir() -> None:
+    config = make_yako_ansible_config(playbook_dir=Path("/path/to/playbooks"))
 
     assert config["defaults"]["playbook_dir"] == snapshot("/path/to/playbooks")
 
@@ -80,9 +80,9 @@ def test_make_roly_ansible_config_with_playbook_dir() -> None:
                         "--limit",
                         "127.0.0.1",
                         "-e",
-                        "roly_workspace_dir=/fake-ws",
+                        "yako_workspace_dir=/fake-ws",
                         "-e",
-                        "roly_search_file_path=/fake-ws:/fake",
+                        "yako_search_file_path=/fake-ws:/fake",
                         "-e",
                         "@/fake/test-case.yaml",
                         "/fake/playbook.yaml",
@@ -112,9 +112,9 @@ def test_make_roly_ansible_config_with_playbook_dir() -> None:
                         "--limit",
                         "some-host",
                         "-e",
-                        "roly_workspace_dir=/fake-ws",
+                        "yako_workspace_dir=/fake-ws",
                         "-e",
-                        "roly_search_file_path=/fake-ws:/fake",
+                        "yako_search_file_path=/fake-ws:/fake",
                         "-e",
                         "@/fake/test-case.yaml",
                         "-e",
@@ -139,8 +139,8 @@ def test_make_ansible_playbook_cmd(
             ansible_playbook_bin="/fake/ansible-playbook",
             ansible_cfg_path="/fake-ws/ansible.cfg",
             cmd_config=cmd_config,
-            roly_workspace_dir="/fake-ws",
-            roly_test_case_path="/fake/test-case.yaml",
+            yako_workspace_dir="/fake-ws",
+            yako_test_case_path="/fake/test-case.yaml",
             playbook_path=[Path("/fake/playbook.yaml")],
             search_file_paths=[Path("/fake-ws"), Path("/fake")],
         )

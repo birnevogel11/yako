@@ -1,4 +1,4 @@
 runner_mode: "local"
 runner:
   docker:
-    host_roly_repo_dir: "."
+    host_yako_repo_dir: "."

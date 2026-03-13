@@ -18,8 +18,8 @@ from pydantic_settings import (
     YamlConfigSettingsSource,
 )
 
-from roly.consts import ROLY_CONFIG_PATH_ENV_NAME
-from roly.test_case import TestCaseGiven
+from yako.consts import YAKO_CONFIG_PATH_ENV_NAME
+from yako.test_case import TestCaseGiven
 
 if TYPE_CHECKING:
     from typing import Any, Self
@@ -161,28 +161,28 @@ class LocalRunnerInputConfig(LocalRunnerConfig):
 class DockerRunnerConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    image_name: str = "ghcr.io/birnevogel11/roly:latest"
+    image_name: str = "ghcr.io/birnevogel11/yako:latest"
     # dockerfile: Path = ""  # TODO: Should we support it?  # noqa: ERA001
     workspace_dir: Path = Path("/home/ubuntu/workspace")
-    roly_venv_dir: Path = Path("/home/ubuntu/app")
-    roly_src_dir: Path = Path("/home/ubuntu/roly/src/roly")
+    yako_venv_dir: Path = Path("/home/ubuntu/app")
+    yako_src_dir: Path = Path("/home/ubuntu/yako/src/yako")
     extra_args: list[str] = []
 
     ansible_playbook_bin: Path = Path("/home/ubuntu/app/bin/ansible-playbook")
 
-    host_roly_repo_dir: Path | None = None
+    host_yako_repo_dir: Path | None = None
 
     def model_post_init(self, context: Any, /) -> None:
         object.__setattr__(
             self,
             "ansible_playbook_bin",
-            self.roly_venv_dir / "bin" / "ansible-playbook",
+            self.yako_venv_dir / "bin" / "ansible-playbook",
         )
-        if self.host_roly_repo_dir:
+        if self.host_yako_repo_dir:
             object.__setattr__(
                 self,
-                "host_roly_repo_dir",
-                self.host_roly_repo_dir.expanduser().resolve(),
+                "host_yako_repo_dir",
+                self.host_yako_repo_dir.expanduser().resolve(),
             )
 
         return super().model_post_init(context)
@@ -225,14 +225,14 @@ class RunnerConfig(BaseModel):
         )
 
 
-class RolyInputConfig(BaseSettings):
+class YakoInputConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=[".env"],
         env_file_encoding="utf-8",
-        yaml_file=["roly.yaml", "roly_local.yaml"],
+        yaml_file=["yako.yaml", "yako_local.yaml"],
     )
 
-    base_dir: list[Path] = [Path("tests/roly")]
+    base_dir: list[Path] = [Path("tests/yako")]
     runner_mode: RunnerMode = RunnerMode.Local
     ansible: AnsibleConfig = AnsibleConfig()
     runner: RunnerInputConfig = RunnerInputConfig()
@@ -256,15 +256,15 @@ class RolyInputConfig(BaseSettings):
         )
 
 
-class RolyConfig(BaseModel):
-    base_dir: list[Path] = [Path("tests/roly")]
+class YakoConfig(BaseModel):
+    base_dir: list[Path] = [Path("tests/yako")]
     runner_mode: RunnerMode = RunnerMode.Docker
     ansible: AnsibleConfig = AnsibleConfig()
     runner: RunnerConfig = RunnerConfig()
     given: TestCaseGiven = TestCaseGiven()
 
     @classmethod
-    def from_input_config(cls, input_config: RolyInputConfig) -> Self:
+    def from_input_config(cls, input_config: YakoInputConfig) -> Self:
         runner_mode = input_config.runner_mode
 
         match runner_mode:
@@ -287,19 +287,19 @@ class RolyConfig(BaseModel):
 
 def _init_input_config(
     base_path: list[Path] | None = None, config_path: Path | None = None
-) -> RolyInputConfig:
+) -> YakoInputConfig:
     path = None
     if config_path:
         path = config_path
-    elif raw_path := os.environ.get(ROLY_CONFIG_PATH_ENV_NAME):
+    elif raw_path := os.environ.get(YAKO_CONFIG_PATH_ENV_NAME):
         path = Path(raw_path)
 
     input_config = (
-        RolyInputConfig.model_validate(
+        YakoInputConfig.model_validate(
             yaml.safe_load(path.expanduser().resolve().read_text())
         )
         if path
-        else RolyInputConfig()
+        else YakoInputConfig()
     )
     if base_path:
         input_config = input_config.model_copy(update={"base_dir": base_path})
@@ -309,5 +309,5 @@ def _init_input_config(
 
 def init_config(
     base_path: list[Path] | None = None, config_path: Path | None = None
-) -> RolyConfig:
-    return RolyConfig.from_input_config(_init_input_config(base_path, config_path))
+) -> YakoConfig:
+    return YakoConfig.from_input_config(_init_input_config(base_path, config_path))

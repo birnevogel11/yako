@@ -16,7 +16,7 @@ test_cases:
         register: tmp_result
 
       - name: Assert result
-        roly_assert:
+        yako_assert:
           stmts:
             - actual: "{{ tmp_result.path }}"
               expected: "/tmp/fake"

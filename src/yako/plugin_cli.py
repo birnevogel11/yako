@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from roly.ansible import make_roly_ansible_config
-from roly.consts import ROLY_TEST_CONFIG_KEY
-from roly.test_case import TestCaseInputConfig
+from yako.ansible import make_yako_ansible_config
+from yako.consts import YAKO_TEST_CONFIG_KEY
+from yako.test_case import TestCaseInputConfig
 
 TEST_PLAYBOOK_BASE_DIR = (Path(__file__).parent / "test_callback_plugin").resolve()
 
@@ -47,9 +47,9 @@ def _run_ansible_playbook(
     *,
     ws_dir: Path,
     playbook_path: Path,
-    roly_test_case_path: Path,
+    yako_test_case_path: Path,
     ansible_cfg_path: Path,
-    roly_workspace_dir: Path,
+    yako_workspace_dir: Path,
     extra_args: list[str] | None = None,
     capture_output: bool = True,
 ) -> subprocess.CompletedProcess[str]:
@@ -67,13 +67,13 @@ def _run_ansible_playbook(
             "-v",
             "--connection=local",
             "-e",
-            f"roly_workspace_dir={roly_workspace_dir}",
+            f"yako_workspace_dir={yako_workspace_dir}",
             "--inventory",
             "127.0.0.1,",
             "--limit",
             "127.0.0.1",
             "-e",
-            f"@{roly_test_case_path.resolve()}",
+            f"@{yako_test_case_path.resolve()}",
         ),
         *(extra_args or ()),
         str(playbook_path.resolve()),
@@ -96,13 +96,13 @@ def run_plugin_callback_test(
     extra_args: list[str] | None = None,
     capture_output: bool = True,
 ) -> subprocess.CompletedProcess[str]:
-    raw_test = yaml.safe_load(test_case_path.read_text())[ROLY_TEST_CONFIG_KEY]
+    raw_test = yaml.safe_load(test_case_path.read_text())[YAKO_TEST_CONFIG_KEY]
     test_case = TestCaseInputConfig.model_validate(raw_test)
 
     with tempfile.TemporaryDirectory() as raw_tmp_dir:
         ws_dir = Path(raw_tmp_dir).resolve()
         ansible_cfg_path = ws_dir / "ansible.cfg"
-        make_roly_ansible_config(
+        make_yako_ansible_config(
             output_path=ansible_cfg_path, roles_path=extra_roles_path
         )
         logger.debug("Ansible config:\n%s", ansible_cfg_path.read_text())
@@ -117,8 +117,8 @@ def run_plugin_callback_test(
             return _run_ansible_playbook(
                 ws_dir=ws_dir,
                 playbook_path=test_playbook_path,
-                roly_test_case_path=test_case_path,
-                roly_workspace_dir=ws_dir,
+                yako_test_case_path=test_case_path,
+                yako_workspace_dir=ws_dir,
                 ansible_cfg_path=ansible_cfg_path,
                 extra_args=extra_args,
                 capture_output=capture_output,

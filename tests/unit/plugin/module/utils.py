@@ -27,7 +27,7 @@ def run_ansible_module(
     module_args: dict[str, Any] | None = None,
     expected_failed: bool = False,
 ) -> dict[str, Any]:
-    """Help to run the roly_assert module with optional module args."""
+    """Help to run the yako_assert module with optional module args."""
     module_args = module_args or {}
 
     context = (

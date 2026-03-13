@@ -6,18 +6,18 @@ from typing import TYPE_CHECKING
 import pytest
 from inline_snapshot import snapshot
 
-from roly.plugins.module.roly_assert import run_module
+from yako.plugins.module.yako_assert import run_module
 from tests.unit.plugin.module.utils import run_ansible_module
 
 if TYPE_CHECKING:
     from typing import Any
 
 
-_run_roly_assert_module = functools.partial(run_ansible_module, run_module)
+_run_yako_assert_module = functools.partial(run_ansible_module, run_module)
 
 
-def test_roly_assert_help_function() -> None:
-    assert _run_roly_assert_module(expected_failed=True)["failed"]
+def test_yako_assert_help_function() -> None:
+    assert _run_yako_assert_module(expected_failed=True)["failed"]
 
 
 @pytest.mark.parametrize(
@@ -30,8 +30,8 @@ def test_roly_assert_help_function() -> None:
         (3.14, 3.14),
     ],
 )
-def test_roly_assert_equal(actual_value: Any, expected_value: Any) -> None:
-    assert "failed" not in _run_roly_assert_module(
+def test_yako_assert_equal(actual_value: Any, expected_value: Any) -> None:
+    assert "failed" not in _run_yako_assert_module(
         {"actual": actual_value, "expected": expected_value}
     )
 
@@ -111,16 +111,16 @@ fail(s):
         ),
     ],
 )
-def test_roly_assert_failed(actual_value: Any, expected_value: Any, msg: str) -> None:
-    result = _run_roly_assert_module(
+def test_yako_assert_failed(actual_value: Any, expected_value: Any, msg: str) -> None:
+    result = _run_yako_assert_module(
         {"actual": actual_value, "expected": expected_value}, expected_failed=True
     )
     assert result["msg"] == msg
     assert result["failed"]
 
 
-def test_roly_assert_equal_stmts() -> None:
-    result = _run_roly_assert_module(
+def test_yako_assert_equal_stmts() -> None:
+    result = _run_yako_assert_module(
         {
             "stmts": [
                 {"actual": 5, "expected": 5},
@@ -131,8 +131,8 @@ def test_roly_assert_equal_stmts() -> None:
     assert not result["changed"]
 
 
-def test_roly_assert_equal_stmts_failed() -> None:
-    result = _run_roly_assert_module(
+def test_yako_assert_equal_stmts_failed() -> None:
+    result = _run_yako_assert_module(
         {
             "stmts": [
                 {"actual": 5, "expected": 5},

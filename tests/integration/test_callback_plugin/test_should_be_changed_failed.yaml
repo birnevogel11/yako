@@ -1,10 +1,10 @@
-ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
+YAKO_INTERNAL_INTEGRATION_TEST_CONFIG:
   is_passed: false
   search_keyword: >-
-   [ROLY_ERROR]: Check task state error: Task should_be_changed state error.
+   [YAKO_ERROR]: Check task state error: Task should_be_changed state error.
    actual: False, expected: True
 
-ROLY_TEST_CASE_CONFIG:
+YAKO_TEST_CASE_CONFIG:
   name: "test_should_be_changed_failed"
   path: "fake"
   given:

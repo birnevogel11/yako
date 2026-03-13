@@ -9,7 +9,7 @@ import pydantic
 import yaml
 from pydantic import BaseModel, ConfigDict
 
-from roly.test_case import (
+from yako.test_case import (
     TestCase,
     TestCaseGiven,
     TestCaseInputConfig,
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
     from typing import Self
 
-    from roly.config import RolyConfig
+    from yako.config import YakoConfig
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class TestModule(BaseModel):
 
     @classmethod
     def from_input_config(
-        cls, config: RolyConfig, module_config: TestModuleInputConfig
+        cls, config: YakoConfig, module_config: TestModuleInputConfig
     ) -> Self:
         test_cases = list(
             itertools.chain.from_iterable(
@@ -86,7 +86,7 @@ def _list_test_modules(base_path: Path) -> Iterable[Path]:
 
 
 def list_test_module_input_configs(
-    config: RolyConfig,
+    config: YakoConfig,
 ) -> tuple[list[TestModuleInputConfig], list[str]]:
     _basic_check(config.base_dir)
 
@@ -124,7 +124,7 @@ class TestSuite(BaseModel):
 
     @classmethod
     def from_raw_module_configs(
-        cls, config: RolyConfig, raw_module_configs: list[TestModuleInputConfig]
+        cls, config: YakoConfig, raw_module_configs: list[TestModuleInputConfig]
     ) -> Self:
         return cls(
             test_modules=[

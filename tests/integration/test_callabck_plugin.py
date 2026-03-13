@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING
 import pytest
 import yaml
 
-from roly.ansible import make_roly_ansible_config
-from roly.consts import ROLY_TEST_CONFIG_KEY
-from roly.test_case import TestCaseInputConfig
+from yako.ansible import make_yako_ansible_config
+from yako.consts import YAKO_TEST_CONFIG_KEY
+from yako.test_case import TestCaseInputConfig
 
 TEST_PLAYBOOK_BASE_DIR = (Path(__file__).parent / "test_callback_plugin").resolve()
 
@@ -49,7 +49,7 @@ def _run_ansible_playbook(
     *,
     ws_dir: Path,
     playbook_path: Path,
-    roly_test_case_path: Path,
+    yako_test_case_path: Path,
     ansible_cfg_path: Path,
     search_file_paths: list[Path],
     extra_args: list[str] | None = None,
@@ -74,11 +74,11 @@ def _run_ansible_playbook(
             "--limit",
             "127.0.0.1",
             "-e",
-            f"roly_workspace_dir={ws_dir.resolve()}",
+            f"yako_workspace_dir={ws_dir.resolve()}",
             "-e",
-            f"roly_search_file_path={search_file_path}",
+            f"yako_search_file_path={search_file_path}",
             "-e",
-            f"@{roly_test_case_path.resolve()}",
+            f"@{yako_test_case_path.resolve()}",
         ),
         *(extra_args or ()),
         str(playbook_path.resolve()),
@@ -101,13 +101,13 @@ def _run_single_test(
     extra_args: list[str] | None = None,
     capture_output: bool = True,
 ) -> subprocess.CompletedProcess[str]:
-    raw_test = yaml.safe_load(test_case_path.read_text())[ROLY_TEST_CONFIG_KEY]
+    raw_test = yaml.safe_load(test_case_path.read_text())[YAKO_TEST_CONFIG_KEY]
     test_case = TestCaseInputConfig.model_validate(raw_test)
 
     with tempfile.TemporaryDirectory() as raw_tmp_dir:
         ws_dir = Path(raw_tmp_dir).resolve()
         ansible_cfg_path = ws_dir / "ansible.cfg"
-        make_roly_ansible_config(
+        make_yako_ansible_config(
             output_path=ansible_cfg_path, roles_path=extra_roles_path
         )
         logger.debug("Ansible config: %s", ansible_cfg_path.read_text())
@@ -124,7 +124,7 @@ def _run_single_test(
             return _run_ansible_playbook(
                 ws_dir=ws_dir,
                 playbook_path=test_playbook_path,
-                roly_test_case_path=test_case_path,
+                yako_test_case_path=test_case_path,
                 ansible_cfg_path=ansible_cfg_path,
                 extra_args=extra_args,
                 capture_output=capture_output,
@@ -145,7 +145,7 @@ def _run_test(
     if search_str not in result.stdout:
         msgs.append(f"Can not found the string in stdout. str: '{search_str}'")
 
-    if os.environ.get("ROLY_DEBUG_INTEGRATION_TEST", "0") == "1":
+    if os.environ.get("YAKO_DEBUG_INTEGRATION_TEST", "0") == "1":
         print(
             "\n".join(
                 (
@@ -177,7 +177,7 @@ def _run_test(
 
 def _list_test_cases(
     base_dir: Path,
-    config_key: str = "ROLY_INTERNAL_INTEGRATION_TEST_CONFIG",
+    config_key: str = "YAKO_INTERNAL_INTEGRATION_TEST_CONFIG",
 ) -> list[tuple[str, str, bool]]:
     test_paths = [
         path
@@ -206,7 +206,7 @@ def _list_test_cases(
     ("test_case_file_name", "search_str", "is_pass"),
     _list_test_cases(TEST_PLAYBOOK_BASE_DIR),
 )
-def test_roly_callback(
+def test_yako_callback(
     test_case_file_name: str, search_str: str, is_pass: bool
 ) -> None:
     _run_test(test_case_file_name, search_str, is_pass)

@@ -4,7 +4,7 @@ import pydantic
 import pytest
 from inline_snapshot import snapshot
 
-from roly.assert_check import AssertMode, AssertStmt
+from yako.assert_check import AssertMode, AssertStmt
 
 
 def test_validate_input_mode() -> None:

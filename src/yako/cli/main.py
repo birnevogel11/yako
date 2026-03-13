@@ -4,8 +4,8 @@ from typing import Annotated
 
 import typer
 
-from roly.plugin_cli import run_plugin_callback_test
-from roly.runner.runner import run_tests_cli
+from yako.plugin_cli import run_plugin_callback_test
+from yako.runner.runner import run_tests_cli
 
 app = typer.Typer()
 

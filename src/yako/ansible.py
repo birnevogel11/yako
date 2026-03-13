@@ -6,11 +6,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from roly.config import AnsiblePlaybookCommandConfig
+    from yako.config import AnsiblePlaybookCommandConfig
 
 
-def make_roly_ansible_config(
-    enable_roly_callback: bool = True,
+def make_yako_ansible_config(
+    enable_yako_callback: bool = True,
     *,
     base_dir: Path | None = None,
     python_bin: str | None = None,
@@ -26,8 +26,8 @@ def make_roly_ansible_config(
         "callback_plugins": str(plugins_dir / "callback"),
         "interpreter_python": python_bin or sys.executable,
     }
-    if enable_roly_callback:
-        default_config["callbacks_enabled"] = "roly_callback"
+    if enable_yako_callback:
+        default_config["callbacks_enabled"] = "yako_callback"
     if roles_path:
         default_config["roles_path"] = ":".join(roles_path)
     if playbook_dir:
@@ -49,8 +49,8 @@ def make_ansible_playbook_cmd(
     ansible_playbook_bin: Path,
     ansible_cfg_path: Path,
     cmd_config: AnsiblePlaybookCommandConfig,
-    roly_workspace_dir: Path,
-    roly_test_case_path: Path,
+    yako_workspace_dir: Path,
+    yako_test_case_path: Path,
     playbook_path: list[Path],
     search_file_paths: list[Path],
 ) -> tuple[list[str], dict[str, str]]:
@@ -68,11 +68,11 @@ def make_ansible_playbook_cmd(
         "--limit",
         f"{cmd_config.limit}",
         "-e",
-        f"roly_workspace_dir={roly_workspace_dir}",
+        f"yako_workspace_dir={yako_workspace_dir}",
         "-e",
-        f"roly_search_file_path={search_file_path}",
+        f"yako_search_file_path={search_file_path}",
         "-e",
-        f"@{roly_test_case_path}",
+        f"@{yako_test_case_path}",
         *(cmd_config.extra_args or ()),
         *(str(path) for path in playbook_path),
     ]

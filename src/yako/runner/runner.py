@@ -7,20 +7,20 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
-from roly.config import RunnerMode, init_config
-from roly.report import report_test_config, report_test_suite_result
-from roly.runner.docker_case_runner import DockerTestCaseRunner
-from roly.runner.local_case_runner import LocalTestCaseRunner
-from roly.test_case import TestCaseResult
-from roly.test_module import TestSuite, TestSuiteResult, list_test_module_input_configs
+from yako.config import RunnerMode, init_config
+from yako.report import report_test_config, report_test_suite_result
+from yako.runner.docker_case_runner import DockerTestCaseRunner
+from yako.runner.local_case_runner import LocalTestCaseRunner
+from yako.test_case import TestCaseResult
+from yako.test_module import TestSuite, TestSuiteResult, list_test_module_input_configs
 
 if TYPE_CHECKING:
     import subprocess
     from typing import Self
 
-    from roly.config import RolyConfig
-    from roly.test_case import TestCase
-    from roly.test_module import TestModule
+    from yako.config import YakoConfig
+    from yako.test_case import TestCase
+    from yako.test_module import TestModule
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class TestCaseRunner(Protocol):
 
 
 def run_test_suite(
-    config: RolyConfig,
+    config: YakoConfig,
     case_runner: TestCaseRunner,
     filter_key: str = "",
     list_only: bool = False,
@@ -114,7 +114,7 @@ def run_test_suite(
 
 
 def run_tests(
-    config: RolyConfig,
+    config: YakoConfig,
     filter_key: str = "",
     list_only: bool = False,
     verbose_progress: bool = False,

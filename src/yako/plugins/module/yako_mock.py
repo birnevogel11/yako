@@ -13,12 +13,12 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
 
     module = AnsibleModule(argument_spec=MODULE_ARGS, supports_check_mode=True)
-    module.log(msg="Roly mock module started")
+    module.log(msg="Yako mock module started")
 
     # CHANGED
     result = {
         "changed": module.params["consider_changed"],
-        "msg": f"Roly Mock module called. "
+        "msg": f"Yako Mock module called. "
         f"Task name: {module.params['task_name']}, "
         f"Original module: {module.params['original_module_name']}",
     }

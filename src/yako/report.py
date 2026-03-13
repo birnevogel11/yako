@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 
 import rich.console
 
-from roly.test_case import TestCaseResultState
+from yako.test_case import TestCaseResultState
 
 if TYPE_CHECKING:
-    from roly.config import RolyConfig
-    from roly.test_module import TestSuiteResult
+    from yako.config import YakoConfig
+    from yako.test_module import TestSuiteResult
 
 console = rich.console.Console()
 
@@ -71,7 +71,7 @@ def print_summary_line(result: TestSuiteResult) -> None:
     console.rule(" ".join(summary_tokens), align="center", characters="=")
 
 
-def report_test_config(config: RolyConfig) -> None:
+def report_test_config(config: YakoConfig) -> None:
     console.print(
         "base path(s):", ", ".join(str(p) for p in config.base_dir), style=None
     )

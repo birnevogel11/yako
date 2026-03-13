@@ -1,7 +1,7 @@
 from ansible.module_utils.basic import AnsibleModule
 from pydantic import BaseModel, ConfigDict
 
-from roly.assert_check import AssertStmt
+from yako.assert_check import AssertStmt
 
 MODULE_ARGS = {
     "stmts": {"type": "list", "required": False},
@@ -30,7 +30,7 @@ def run_module():
     # define available arguments/parameters a user can pass to the module
 
     module = AnsibleModule(argument_spec=MODULE_ARGS, supports_check_mode=True)
-    module.log(msg="Roly assert module started")
+    module.log(msg="Yako assert module started")
     module.log(msg=f"{'actual' in module.params}, {'stmts' in module.params}")
 
     match (bool(module.params.get("actual")), bool(module.params.get("stmts"))):

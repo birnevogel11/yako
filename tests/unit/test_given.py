@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from inline_snapshot import snapshot
 
-from roly.given import CopyFileConfig, TestCaseGiven
+from yako.given import CopyFileConfig, TestCaseGiven
 
 
 @pytest.mark.parametrize(

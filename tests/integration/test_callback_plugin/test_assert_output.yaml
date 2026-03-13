@@ -1,7 +1,7 @@
-ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
-  search_keyword: "[ROLY]: Pass for assert outputs."
+YAKO_INTERNAL_INTEGRATION_TEST_CONFIG:
+  search_keyword: "[YAKO]: Pass for assert outputs."
 
-ROLY_TEST_CASE_CONFIG:
+YAKO_TEST_CASE_CONFIG:
   name: "test_assert_input"
   path: "fake"
   given:

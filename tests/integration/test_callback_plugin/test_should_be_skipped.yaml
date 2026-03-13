@@ -1,7 +1,7 @@
-ROLY_INTERNAL_INTEGRATION_TEST_CONFIG:
-  search_keyword: "[ROLY]: should_be_skipped state check ok. expected_state: True"
+YAKO_INTERNAL_INTEGRATION_TEST_CONFIG:
+  search_keyword: "[YAKO]: should_be_skipped state check ok. expected_state: True"
 
-ROLY_TEST_CASE_CONFIG:
+YAKO_TEST_CASE_CONFIG:
   name: "test_should_be_skipped"
   path: "fake"
   given:
