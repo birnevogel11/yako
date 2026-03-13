@@ -8,21 +8,17 @@ RUN set -ex \
     && apt upgrade -y \
     && apt install -y build-essential curl wget git pigz moreutils
 
-COPY . /home/ubuntu/roly
-
-RUN set -ex \
-    && chown -R "$(id -u ubuntu):$(id -g ubuntu)" /home/ubuntu/roly
-
 USER ubuntu
 
 RUN set -ex \
     && uv python install 3.12 3.14 \
     && uv venv -p 3.14 /home/ubuntu/app \
-    && uv pip install --python /home/ubuntu/app/bin/python3 tox black ruff tox-uv ansible \
-        ansible-lint pudb typer GitPython pyyaml cerberus
-
-RUN set -ex \
-    && uv pip install --python /home/ubuntu/app/bin/python3 -e /home/ubuntu/roly \
+    && uv pip install --python /home/ubuntu/app/bin/python3 tox ruff tox-uv ansible \
+        ansible-lint pudb typer GitPython pyyaml cerberus \
     && mkdir -p /home/ubuntu/workspace
+
+COPY . /home/ubuntu/roly
+
+RUN uv pip install --python /home/ubuntu/app/bin/python3 -e /home/ubuntu/roly
 
 WORKDIR /home/ubuntu/workspace
