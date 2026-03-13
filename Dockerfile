@@ -17,7 +17,7 @@ RUN set -ex \
         ansible-lint pudb typer GitPython pyyaml cerberus \
     && mkdir -p /home/ubuntu/workspace
 
-COPY . /home/ubuntu/yako
+COPY --chown=ubuntu:ubuntu . /home/ubuntu/yako
 
 RUN uv pip install --python /home/ubuntu/app/bin/python3 -e /home/ubuntu/yako
 
