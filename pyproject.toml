@@ -16,6 +16,9 @@ dependencies = [
     "typing-extensions>=4.15.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/birnevogel11/yako"
+
 [dependency-groups]
 dev = [
     "inline-snapshot>=0.31.1",
