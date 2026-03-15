@@ -232,7 +232,7 @@ class YakoInputConfig(BaseSettings):
         yaml_file=["yako.yaml", "yako_local.yaml"],
     )
 
-    base_dir: list[Path] = [Path("tests/yako")]
+    base_dir: list[Path] = []
     runner_mode: RunnerMode = RunnerMode.Local
     ansible: AnsibleConfig = AnsibleConfig()
     runner: RunnerInputConfig = RunnerInputConfig()
@@ -303,6 +303,12 @@ def _init_input_config(
     )
     if base_path:
         input_config = input_config.model_copy(update={"base_dir": base_path})
+    else:
+        default_base_path = Path("tests/yako")
+        if default_base_path.is_dir():
+            input_config = input_config.model_copy(
+                update={"base_dir": [default_base_path]}
+            )
 
     return input_config
 
