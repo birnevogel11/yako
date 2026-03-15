@@ -75,7 +75,7 @@ Create `tests/yako/test_hello.yaml`:
 test_cases:
   - name: "test_hello"
     playbooks:
-      - "hello.yaml"
+      - "playbooks/hello.yaml"
 ```
 
 ### 4. Run

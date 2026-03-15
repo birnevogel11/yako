@@ -1,0 +1,4 @@
+test_cases:
+  - name: "test_hello"
+    playbooks:
+      - "playbooks/hello.yaml"
