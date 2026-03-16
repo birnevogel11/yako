@@ -1,13 +1,23 @@
-given:
-  mock_tasks:
-    - name: Create a temp folder
-      mock:
-        changed: true
-        result_dict:
-          path: "/tmp/fake"
-
 test_cases:
   - name: "test_mock_basic"
+    given:
+      mock_tasks:
+        - name: Create a temp folder
+          mock: {}
+    tasks:
+      - name: Create a temp folder
+        tempfile:
+          state: directory
+          suffix: build
+
+  - name: "test_mock_changed"
+    given:
+      mock_tasks:
+        - name: Create a temp folder
+          mock:
+            changed: true
+            result_dict:
+              path: "/tmp/fake"
     tasks:
       - name: Create a temp folder
         tempfile:

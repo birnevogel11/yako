@@ -1,0 +1,51 @@
+test_cases:
+  - name: "test_assert_input"
+    given:
+      mock_tasks:
+        - name: Hello world
+          assert_inputs:
+            - name: msg
+              value: Hello
+
+    tasks:
+      - name: Hello world
+        debug:
+          msg: Hello
+
+  - name: "test_assert_input_not_equal"
+    given:
+      mock_tasks:
+        - name: Hello world
+          assert_inputs:
+            - name: msg
+              value: World
+              mode: "!="
+    tasks:
+      - name: Hello world
+        debug:
+          msg: Hello
+
+  - name: "test_assert_input"
+    given:
+      mock_tasks:
+        - name: Hello world
+          assert_outputs:
+            - name: msg
+              value: Hello
+    tasks:
+      - name: Hello world
+        debug:
+          msg: Hello
+
+  - name: "test_assert_output_not_equal"
+    given:
+      mock_tasks:
+        - name: Hello world
+          assert_outputs:
+            - name: msg
+              value: not_equal
+              mode: "!="
+    tasks:
+      - name: Hello world
+        debug:
+          msg: Hello

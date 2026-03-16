@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import itertools
-from collections import ChainMap
+from collections import ChainMap, OrderedDict
 from typing import TYPE_CHECKING, Annotated, Any
 
 import ansible
@@ -182,14 +182,19 @@ class TestCaseGiven(BaseModel):
 
     @classmethod
     def from_merge(cls, *givens: Self) -> Self:
+        mock_tasks: OrderedDict[str, TestTaskConfig] = OrderedDict(
+            (mock_task.name, mock_task)
+            for mock_task in itertools.chain.from_iterable(
+                given.mock_tasks for given in givens
+            )
+        )
+
         return cls.model_validate(
             {
                 "files": list(
                     itertools.chain.from_iterable(given.files for given in givens)
                 ),
                 "extra_vars": dict(ChainMap(*(given.extra_vars for given in givens))),
-                "mock_tasks": list(
-                    itertools.chain.from_iterable(given.mock_tasks for given in givens),
-                ),
+                "mock_tasks": list(mock_tasks.values()),
             }
         )
