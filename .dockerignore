@@ -1,2 +1,8 @@
-src/roly.egg-info
+.venv
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.copilot
 __pycache__
+*.py[cod]
+src/roly.egg-info

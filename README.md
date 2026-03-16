@@ -473,6 +473,10 @@ Important fields:
 You can also add Docker-only Ansible settings under `runner.docker.ansible`; they are
 merged with the top-level `ansible` block when `runner_mode: "docker"` is active.
 
+The published GHCR image at `ghcr.io/birnevogel11/yako` is a multi-platform manifest
+list for `linux/amd64` and `linux/arm64/v8`. The `latest` tag tracks the default
+branch, and Git tags publish matching semver image tags.
+
 ```yaml
 runner:
   docker:
