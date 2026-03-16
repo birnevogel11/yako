@@ -33,3 +33,24 @@ test_cases:
 
             - actual: "{{ tmp_result.changed }}"
               mode: "is_true"
+
+  - name: "test_mock_custom"
+    given:
+      mock_tasks:
+        - name: Create a temp folder
+          mock:
+            custom_action:
+              set_fact:
+                msg: "Hello fake"
+
+    tasks:
+      - name: Create a temp folder
+        tempfile:
+          state: directory
+          suffix: build
+        register: tmp_result
+
+      - name: Assert mock
+        yako_assert:
+          actual: "{{ msg }}"
+          expected: "Hello fake"

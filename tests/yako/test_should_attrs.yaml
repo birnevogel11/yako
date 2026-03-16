@@ -1,0 +1,69 @@
+test_cases:
+  - name: "test_should_be_changed"
+    given:
+      mock_tasks:
+        - name: Mock target
+          mock:
+            changed: true
+          should_be_changed: true
+
+    tasks:
+      - name: Mock target
+        debug:
+          msg: "Hello, world!"
+
+  - name: "test_should_be_changed_false"
+    given:
+      mock_tasks:
+        - name: Mock target
+          should_be_changed: false
+
+    tasks:
+      - name: Mock target
+        debug:
+          msg: "Hello, world!"
+
+  - name: "test_should_be_skipped"
+    given:
+      mock_tasks:
+        - name: Mock target
+          should_be_skipped: true
+
+    tasks:
+      - name: Mock target
+        when: 2 == 3
+        debug:
+          msg: "Hello, world!"
+
+  - name: "test_should_be_skipped_false"
+    given:
+      mock_tasks:
+        - name: Mock target
+          should_be_skipped: false
+
+    tasks:
+      - name: Mock target
+        debug:
+          msg: "Hello, world!"
+
+  - name: "test_should_fail"
+    given:
+      mock_tasks:
+        - name: Mock target
+          should_fail: true
+
+    tasks:
+      - name: Mock target
+        fail:
+          msg: "You're already perfect."
+
+  - name: "test_should_fail_false"
+    given:
+      mock_tasks:
+        - name: Mock target
+          should_fail: false
+
+    tasks:
+      - name: Mock target
+        debug:
+          msg: "Snowball"

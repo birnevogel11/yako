@@ -1,0 +1,163 @@
+test_cases:
+  - name: "test_copy_file_basic"
+    given:
+      extra_vars:
+        tmp_dest_folder_name: "nested_fake"
+      files:
+        - "hello.txt"
+        - src: "hello.txt"
+          dest: "copy_of_hello.txt"
+        - src: "hello.txt"
+          dest: "nested/copy_of_hello.txt"
+        - src: "hello.txt"
+          dest: "/tmp/copy_of_hello.txt"
+        - src: "hello.txt"
+          dest: "{{ tmp_dest_folder_name }}/copy_of_hello.txt"
+    tasks:
+      - name: Show yako workspace
+        debug:
+          msg: "{{ yako_workspace_dir }}"
+
+      - block:
+          - name: Check file exists in workspace
+            stat:
+              path: "{{ yako_workspace_dir }}/hello.txt"
+            register: hello_stat
+
+          - name: Assert file exists in workspace
+            assert:
+              that:
+                - hello_stat.stat.exists
+              success_msg: "File hello.txt exists in yako workspace."
+
+      - block:
+          - name: Check file exists in workspace
+            stat:
+              path: "{{ yako_workspace_dir }}/copy_of_hello.txt"
+            register: hello_stat
+
+          - name: Assert file exists in workspace
+            assert:
+              that:
+                - hello_stat.stat.exists
+              success_msg: "File hello.txt exists in yako workspace."
+
+      - block:
+          - name: Check file exists in workspace
+            stat:
+              path: "{{ yako_workspace_dir }}/nested/copy_of_hello.txt"
+            register: hello_stat
+
+          - name: Assert file exists in workspace
+            assert:
+              that:
+                - hello_stat.stat.exists
+              success_msg: "File hello.txt exists in yako workspace."
+
+      - block:
+          - name: Check file exists in workspace
+            stat:
+              path: "/tmp/copy_of_hello.txt"
+            register: hello_stat
+
+          - name: Assert file exists in workspace
+            assert:
+              that:
+                - hello_stat.stat.exists
+              success_msg: "File hello.txt exists in yako workspace."
+
+      - block:
+          - name: Check file exists in workspace
+            stat:
+              path: "{{ yako_workspace_dir }}/{{ tmp_dest_folder_name }}/\
+                copy_of_hello.txt"
+            register: hello_stat
+
+          - name: Assert file exists in workspace
+            assert:
+              that:
+                - hello_stat.stat.exists
+              success_msg: "File hello.txt exists in yako workspace."
+
+
+  - name: "test_copy_file_dir"
+    given:
+      extra_vars:
+        tmp_dest_folder_name: "nested_fake"
+      files:
+        - "hello_air/"
+        - "hello_air"
+        - src: "hello_air"
+          dest: "copy_of_hello_air"
+        - src: "hello_air/"
+          dest: "copy_of_hello_air2/"
+        - src: "hello_air"
+          dest: "/tmp/copy_of_hello_air"
+        - src: "hello_air"
+          dest: "{{ tmp_dest_folder_name }}/copy_of_hello_air"
+    tasks:
+      - name: Show yako workspace
+        debug:
+          msg: "{{ yako_workspace_dir }}"
+
+      - block:
+          - name: Check file exists in workspace
+            stat:
+              path: "{{ yako_workspace_dir }}/hello_air/air.txt"
+            register: hello_stat
+
+          - name: Assert file exists in workspace
+            assert:
+              that:
+                - hello_stat.stat.exists
+              success_msg: "File air.txt exists in yako workspace."
+
+      - block:
+          - name: Check file exists in workspace
+            stat:
+              path: "{{ yako_workspace_dir }}/copy_of_hello_air/air.txt"
+            register: hello_stat
+
+          - name: Assert file exists in workspace
+            assert:
+              that:
+                - hello_stat.stat.exists
+              success_msg: "File air.txt exists in yako workspace."
+
+      - block:
+          - name: Check file exists in workspace
+            stat:
+              path: "{{ yako_workspace_dir }}/copy_of_hello_air2/\
+                hello_air/air.txt"
+            register: hello_stat
+
+          - name: Assert file exists in workspace
+            assert:
+              that:
+                - hello_stat.stat.exists
+              success_msg: "File air.txt exists in yako workspace."
+
+      - block:
+          - name: Check file exists in workspace
+            stat:
+              path: "/tmp/copy_of_hello_air/air.txt"
+            register: hello_stat
+
+          - name: Assert file exists in workspace
+            assert:
+              that:
+                - hello_stat.stat.exists
+              success_msg: "File air.txt exists in yako workspace."
+
+      - block:
+          - name: Check file exists in workspace
+            stat:
+              path: "{{ yako_workspace_dir }}/{{ tmp_dest_folder_name }}/\
+                copy_of_hello_air/air.txt"
+            register: hello_stat
+
+          - name: Assert file exists in workspace
+            assert:
+              that:
+                - hello_stat.stat.exists
+              success_msg: "File air.txt exists in yako workspace."
