@@ -4,6 +4,7 @@ import contextlib
 import functools
 import shutil
 import sys
+import traceback
 from collections import ChainMap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -54,6 +55,10 @@ class YakoAnsiblePluginError(Exception):
         super().__init__(message)
         if exit_code:
             global_display.display(msg=f"[YAKO_ERROR]: {message}", color=C.COLOR_ERROR)
+            global_display.display(
+                msg=f"[YAKO_ERROR]: {''.join(traceback.format_stack())}",
+                color=C.COLOR_ERROR,
+            )
         else:
             global_display.display(msg=f"[YAKO]: {message}", color=C.COLOR_OK)
         sys.exit(exit_code)
@@ -170,7 +175,7 @@ class YakoInternalState(BaseModel):
 
         # Change task name and ignore error state
         task.task_name = new_task_name  # type: ignore[assignment]
-        task._task_name = new_task_name  # noqa: SLF001  # type: ignore[assignment]# type
+        task._task_name = new_task_name  # type: ignore[assignment]# type
         task.ignore_errors = new_task_ignore_errors
 
     def _find_task_config(

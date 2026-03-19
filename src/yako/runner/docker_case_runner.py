@@ -69,11 +69,20 @@ def _remap_playbook_path(
     if not case.playbooks:
         return case
 
-    ct_path = []
-    for path in case.playbooks:
-        for base, ct_base in playbook_ct_dirs.items():
-            if path.is_relative_to(base):
-                ct_path.append(ct_base / path.relative_to(base))
+    ct_path = [
+        remap_path
+        for path in case.playbooks
+        if (
+            remap_path := next(
+                (
+                    ct_base / path.relative_to(base)
+                    for base, ct_base in playbook_ct_dirs.items()
+                    if path.is_relative_to(base)
+                ),
+                None,
+            )
+        )
+    ]
 
     return case.model_copy(update={"playbooks": ct_path})
 
@@ -211,8 +220,8 @@ class DockerTestCaseRunner:
             docker_cmd = _make_docker_cmd(
                 ansible_cmd,
                 ansible_cmd_env,
-                runner_config,
-                cast(
+                docker_config=runner_config,
+                mount_mapping=cast(
                     "dict[Path, ContainerPath]",
                     {
                         **self._base_mount_mappings,
