@@ -54,31 +54,20 @@ Create `yako.yaml` in your repository root:
 runner_mode: "local"
 ```
 
-### 2. Write a playbook to test
-
-Create `tests/yako/playbooks/hello.yaml`:
-
-```yaml
-- hosts: 127.0.0.1
-  gather_facts: false
-  tasks:
-    - name: Say hello
-      debug:
-        msg: "Hello, world!"
-```
-
-### 3. Write a test case
+### 2. Write a test case
 
 Create `tests/yako/test_hello.yaml`:
 
 ```yaml
 test_cases:
   - name: "test_hello"
-    playbooks:
-      - "playbooks/hello.yaml"
+    tasks:
+      - name: Say hello
+        debug:
+          msg: "Hello, world!"
 ```
 
-### 4. Run
+### 3. Run
 
 ```shell
 # Run without installing globally
@@ -100,14 +89,16 @@ given:
 
 test_cases:
   - name: "test_something"
-    playbooks:
-      - "my_playbook.yaml"
     given:
       extra_vars:
         feature_flag: true
       mock_tasks:
         - name: "Install packages"
           mock: {}
+    tasks:
+      - name: Say hello
+        debug:
+          msg: "Hello, world!"
 ```
 
 ### Playbooks vs Inline Tasks
