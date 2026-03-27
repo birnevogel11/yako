@@ -1,0 +1,7 @@
+apple: "orange"
+apple_version: "1.0"
+
+apple_config:
+  name: "orange"
+  status: "fresh"
+  version: "{{ apple_version }}"

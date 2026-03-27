@@ -6,7 +6,7 @@ import os
 from collections import ChainMap
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, ClassVar
 from urllib.parse import urlparse
 
 import yaml
@@ -124,6 +124,8 @@ class RepoRoleConfig(BaseModel):
 class AnsibleConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
+    DEFAULT_ROLES_PATH: ClassVar[Path] = Path.cwd() / "roles"
+
     roles_path: list[Path | RepoRoleConfig] = []
     repo_staging: dict[ParsedGitUri, Path] = {}
     ansible_playbook: AnsiblePlaybookCommandConfig = AnsiblePlaybookCommandConfig()
@@ -133,9 +135,10 @@ class AnsibleConfig(BaseModel):
         if not configs:
             raise ValueError("Require at least one config")
 
-        roles_path = list(
-            itertools.chain.from_iterable(config.roles_path for config in configs)
-        )
+        roles_path = [
+            cls.DEFAULT_ROLES_PATH,
+            *(itertools.chain.from_iterable(config.roles_path for config in configs)),
+        ]
         repo_staging = dict(ChainMap(*(config.repo_staging for config in configs)))
         ansible_playbook = AnsiblePlaybookCommandConfig.from_merge(
             *(config.ansible_playbook for config in configs)

@@ -1,0 +1,17 @@
+- name: Show
+  debug:
+    msg: "Show"
+
+- name: Show
+  debug:
+    var: apple
+
+- name: Show
+  debug:
+    var: apple_config
+
+- name: "Test assert"
+  yako_assert:
+    stmts:
+      - actual: "{{ apple_config.version }}"
+        expected: "{{ apple_version }}"
