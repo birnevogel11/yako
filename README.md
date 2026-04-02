@@ -10,7 +10,7 @@ Inspired by [Monkeyble](https://github.com/HewlettPackard/monkeyble), with key d
 
 ## Running Yako
 
-Requires Python 3.13+.
+Requires Python 3.12+.
 
 Run Yako directly without installing it globally:
 
