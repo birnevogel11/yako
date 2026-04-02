@@ -32,14 +32,14 @@ def print_failure_cases(result: TestSuiteResult) -> None:
             console.print("Return Code:", style="bold")
             console.print(case_result.return_code)
             console.print("Stdout:", style="bold")
-            console.print(case_result.stdout)
+            print(case_result.stdout)
             console.print("Stderr:", style="bold")
-            console.print(case_result.stderr)
+            print(case_result.stderr)
 
 
 def print_extra_error_messages(result: TestSuiteResult) -> None:
     for err_msg in result.extra_err_msgs:
-        console.print(err_msg, style="bold orange")
+        console.print(err_msg, style="bold")
 
 
 def print_summary_line(result: TestSuiteResult) -> None:

@@ -537,6 +537,9 @@ class CallbackModule(CallbackBase):
         self._display.debug("Run v2_runner_on_failed")
 
         if task_config := self._yako.task_config:
+            _assert_outputs(task_config, result._result)  # noqa: SLF001
+
+        if task_config := self._yako.task_config:
             _assert_task_state(
                 task_config, should_be_skipped=False, should_fail=True, rescue_fail=True
             )
