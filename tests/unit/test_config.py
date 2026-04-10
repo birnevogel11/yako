@@ -2,7 +2,7 @@ import contextlib
 import os
 from pathlib import Path
 
-from yako.config import YakoInputConfig, RunnerMode
+from yako.config import RunnerMode, YakoInputConfig
 
 
 @contextlib.contextmanager

@@ -5,8 +5,8 @@ import functools
 import pytest
 from inline_snapshot import snapshot
 
-from yako.plugins.module.yako_mock import run_module
 from tests.unit.plugin.module.utils import run_ansible_module
+from yako.plugins.module.yako_mock import run_module
 
 _run_yako_mock_module = functools.partial(run_ansible_module, run_module)
 

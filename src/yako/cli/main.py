@@ -31,7 +31,9 @@ def run_tests(
     verbose: Annotated[
         bool, typer.Option("-v", "--verbose", help="Show debug log.")
     ] = False,
-    filter_key: Annotated[str | None, typer.Option(help="Filter tests by key")] = None,
+    filter_key: Annotated[
+        str | None, typer.Option("-k", "--key", help="Filter tests by key")
+    ] = None,
 ) -> None:
     _init_logging(verbose)
 

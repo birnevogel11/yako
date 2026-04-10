@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 import pytest
 from inline_snapshot import snapshot
 
-from yako.plugins.module.yako_assert import run_module
 from tests.unit.plugin.module.utils import run_ansible_module
+from yako.plugins.module.yako_assert import run_module
 
 if TYPE_CHECKING:
     from typing import Any
@@ -168,3 +168,24 @@ First extra element 0:
 + {'b': 2}\
 """,
     )
+
+
+def test_yako_assert_equal_stmts_long_messages() -> None:
+    result = _run_yako_assert_module(
+        {
+            "stmts": [
+                {
+                    "actual": "test_yako_assert_equal_stmts_long_messages test_yako_assert_equal_stmts_long_messages test_yako_assert_equal_stmts_long_messages test_yako_assert_equal_stmts_long_messages test_yako_assert_equal_stmts_long_messages",  # noqa: E501
+                    "expected": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",  # noqa: E501
+                }
+            ],
+        },
+        expected_failed=True,
+    )
+    assert result["msg"] == snapshot("""\
+fail(s):
+
+'test_yako_assert_equal_stmts_long_message[169 chars]ages' != 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb[256 chars]bbbb'
+- test_yako_assert_equal_stmts_long_messages test_yako_assert_equal_stmts_long_messages test_yako_assert_equal_stmts_long_messages test_yako_assert_equal_stmts_long_messages test_yako_assert_equal_stmts_long_messages
++ bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+""")  # noqa: E501

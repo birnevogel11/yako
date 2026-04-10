@@ -34,21 +34,48 @@ class AssertMode(enum.Enum):
     IsNotFalse = "is_not_false"
 
 
+def _test_case_obj() -> unittest.TestCase:
+    case = unittest.TestCase()
+    case.maxDiff = 1024
+
+    return case
+
+
 MAPPING_ASSERT_FUNCTIONS = {
-    AssertMode.Equal: lambda a, e: unittest.TestCase().assertEqual(a, e),  # noqa: PT009
-    AssertMode.NotEqual: lambda a, e: unittest.TestCase().assertNotEqual(a, e),
-    AssertMode.Less: lambda a, e: unittest.TestCase().assertLess(a, e),  # noqa: PT009
-    AssertMode.Greater: lambda a, e: unittest.TestCase().assertGreater(a, e),
-    AssertMode.LessThen: lambda a, e: unittest.TestCase().assertLessEqual(a, e),
-    AssertMode.GreaterThan: lambda a, e: unittest.TestCase().assertGreaterEqual(a, e),
-    AssertMode.In: lambda a, e: unittest.TestCase().assertIn(a, e),  # noqa: PT009
-    AssertMode.NotIn: lambda a, e: unittest.TestCase().assertNotIn(a, e),  # noqa: PT009
-    AssertMode.IsNone: lambda a, e: unittest.TestCase().assertIsNone(a),
-    AssertMode.IsNotNone: lambda a, e: unittest.TestCase().assertIsNotNone(a),
-    AssertMode.IsTrue: lambda a, e: unittest.TestCase().assertTrue(a),
-    AssertMode.IsFalse: lambda a, e: unittest.TestCase().assertFalse(a),
-    AssertMode.IsNotTrue: lambda a, e: unittest.TestCase().assertFalse(a),
-    AssertMode.IsNotFalse: lambda a, e: unittest.TestCase().assertTrue(a),
+    AssertMode.Equal: lambda a, e: _test_case_obj().assertEqual(a, e),  # noqa: PT009
+    AssertMode.NotEqual: lambda a, e: _test_case_obj().assertNotEqual(  # noqa: PT009
+        a, e
+    ),
+    AssertMode.Less: lambda a, e: _test_case_obj().assertLess(a, e),  # noqa: PT009
+    AssertMode.Greater: lambda a, e: _test_case_obj().assertGreater(  # noqa: PT009
+        a, e
+    ),
+    AssertMode.LessThen: lambda a, e: _test_case_obj().assertLessEqual(  # noqa: PT009
+        a, e
+    ),
+    AssertMode.GreaterThan: lambda a, e: _test_case_obj().assertGreaterEqual(  # noqa: PT009
+        a, e
+    ),
+    AssertMode.In: lambda a, e: _test_case_obj().assertIn(a, e),  # noqa: PT009
+    AssertMode.NotIn: lambda a, e: _test_case_obj().assertNotIn(a, e),  # noqa: PT009
+    AssertMode.IsNone: lambda a, e: _test_case_obj().assertIsNone(  # noqa: ARG005, PT009
+        a
+    ),
+    AssertMode.IsNotNone: lambda a, e: _test_case_obj().assertIsNotNone(  # noqa: ARG005, PT009
+        a
+    ),
+    AssertMode.IsTrue: lambda a, e: _test_case_obj().assertTrue(  # noqa: ARG005, PT009
+        a
+    ),
+    AssertMode.IsFalse: lambda a, e: _test_case_obj().assertFalse(  # noqa: ARG005, PT009
+        a
+    ),
+    AssertMode.IsNotTrue: lambda a, e: _test_case_obj().assertFalse(  # noqa: ARG005, PT009
+        a
+    ),
+    AssertMode.IsNotFalse: lambda a, e: _test_case_obj().assertTrue(  # noqa: ARG005, PT009
+        a
+    ),
 }
 
 

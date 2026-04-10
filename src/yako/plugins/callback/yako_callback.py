@@ -175,7 +175,7 @@ class YakoInternalState(BaseModel):
 
         # Change task name and ignore error state
         task.task_name = new_task_name  # type: ignore[assignment]
-        task._task_name = new_task_name  # type: ignore[assignment]# type
+        task._task_name = new_task_name  # type: ignore[assignment]  # noqa: SLF001
         task.ignore_errors = new_task_ignore_errors
 
     def _find_task_config(
