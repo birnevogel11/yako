@@ -1,0 +1,25 @@
+env_list = ["format", "lint", "mypy", "test", "yako"]
+
+[env_run_base]
+dependency_groups = ["dev"]
+package = "wheel"
+
+[env.format]
+description = "Run ruff formatter"
+commands = [["ruff", "format", "src/", "tests/"]]
+
+[env.lint]
+description = "Run ruff linter"
+commands = [["ruff", "check", "src/", "tests/"]]
+
+[env.mypy]
+description = "Run mypy type checker"
+commands = [["mypy", "src/"]]
+
+[env.test]
+description = "Run pytest"
+commands = [["pytest"]]
+
+[env.yako]
+description = "Run yako integration tests"
+commands = [["yako", "test"]]

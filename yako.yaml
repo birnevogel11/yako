@@ -1,4 +1,4 @@
-runner_mode: "docker"
+runner_mode: "local"
 runner:
   docker:
     host_yako_repo_dir: "."
