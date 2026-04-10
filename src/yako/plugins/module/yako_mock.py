@@ -1,4 +1,6 @@
 # Copyright 2022 Hewlett Packard Enterprise Development LP
+from __future__ import annotations
+
 from ansible.module_utils.basic import AnsibleModule
 
 MODULE_ARGS = {
@@ -9,7 +11,7 @@ MODULE_ARGS = {
 }
 
 
-def run_module():
+def run_module() -> None:
     # define available arguments/parameters a user can pass to the module
 
     module = AnsibleModule(argument_spec=MODULE_ARGS, supports_check_mode=True)
@@ -30,7 +32,7 @@ def run_module():
     module.exit_json(**result)
 
 
-def main():
+def main() -> None:
     run_module()
 
 

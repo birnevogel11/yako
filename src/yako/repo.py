@@ -31,7 +31,7 @@ class RepoCache:
     def __init__(self, base_dir: Path | None = None) -> None:
         self._base_dir = Path("~/.cache/yako").expanduser()
         self._repo_base_dir: Path = None  # type: ignore[assignment]
-        self._cache: Cache = None  # type: ignore[assignment]
+        self._cache: Cache = None
         self._is_init = False
 
     def init(self) -> None:

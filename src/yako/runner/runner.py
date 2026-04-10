@@ -16,7 +16,7 @@ from yako.test_module import TestSuite, TestSuiteResult, list_test_module_input_
 
 if TYPE_CHECKING:
     import subprocess
-    from typing import Self
+    from typing import Any, Self
 
     from yako.config import YakoConfig
     from yako.test_case import TestCase
@@ -35,7 +35,7 @@ class Timer:
         self.start_time = time.time()
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         if self.start_time is not None:
             self.elapsed_time = time.time() - self.start_time
 

@@ -26,7 +26,7 @@ class AssertStmts(BaseModel):
         )
 
 
-def run_module():
+def run_module() -> None:
     # define available arguments/parameters a user can pass to the module
 
     module = AnsibleModule(argument_spec=MODULE_ARGS, supports_check_mode=True)
@@ -52,7 +52,7 @@ def run_module():
         module.fail_json(failed_msg)
 
 
-def main():
+def main() -> None:
     run_module()
 
 

@@ -19,9 +19,10 @@ from pydantic_settings import (
 )
 
 from yako.consts import YAKO_CONFIG_PATH_ENV_NAME
-from yako.test_case import TestCaseGiven
+from yako.given import TestCaseGiven
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from typing import Any, Self
 
 logger = logging.getLogger(__name__)
@@ -104,7 +105,9 @@ class GitUri(BaseModel):
         return super().model_post_init(context)
 
 
-def validate_git_uri(value, handler) -> GitUri:
+def validate_git_uri(
+    value: str | dict[str, Any], handler: Callable[..., GitUri]
+) -> GitUri:
     if isinstance(value, str):
         return GitUri.from_raw(value)
 

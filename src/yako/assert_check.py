@@ -99,7 +99,7 @@ class AssertStmt(BaseModel):
     msg: str | None = None
     file: FileMode = FileMode.No
 
-    @model_validator(mode="after")  # type: ignore[misc]
+    @model_validator(mode="after")
     def validate_mode(self) -> Self:
         if (
             self.mode

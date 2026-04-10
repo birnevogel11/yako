@@ -9,9 +9,9 @@ import pydantic
 import yaml
 from pydantic import BaseModel, ConfigDict
 
+from yako.given import TestCaseGiven
 from yako.test_case import (
     TestCase,
-    TestCaseGiven,
     TestCaseInputConfig,
     TestCaseResult,
     TestCaseResultState,

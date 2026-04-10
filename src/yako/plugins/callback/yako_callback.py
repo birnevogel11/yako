@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 global_display = Display()
 
 
-def _display_message_ok(msg: str, color=C.COLOR_OK) -> None:
+def _display_message_ok(msg: str, color: str = C.COLOR_OK) -> None:
     global_display.display(msg=f"[YAKO]: {msg}", color=color)
 
 
@@ -174,8 +174,8 @@ class YakoInternalState(BaseModel):
         )
 
         # Change task name and ignore error state
-        task.task_name = new_task_name  # type: ignore[assignment]
-        task._task_name = new_task_name  # type: ignore[assignment]  # noqa: SLF001
+        task.task_name = new_task_name
+        task._task_name = new_task_name  # noqa: SLF001
         task.ignore_errors = new_task_ignore_errors
 
     def _find_task_config(
@@ -286,7 +286,7 @@ def _assert_inputs(task: Task, yako_state: YakoInternalState) -> None:
 def _assert_outputs(
     task_config: TestTaskConfig, result_dict: Mapping[str, Any]
 ) -> None:
-    var_templar = Templar(loader=DataLoader(), variables=result_dict)  # type: ignore[arg-type]
+    var_templar = Templar(loader=DataLoader(), variables=result_dict)
     passed_asserts, failed_asserts = _assert_stmts(
         task_config.assert_outputs,
         var_templar.resolve_variable_expression,
@@ -454,8 +454,8 @@ def _copy_test_case_files(
     _copy_files_with_configs(copy_configs)
 
 
-class CallbackModule(CallbackBase):
-    def __init__(self, *args, **kwargs) -> None:
+class CallbackModule(CallbackBase):  # type: ignore[misc]
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         self._yako: YakoInternalState = None  # type: ignore[assignment]
@@ -485,7 +485,7 @@ class CallbackModule(CallbackBase):
 
         return play
 
-    def v2_runner_on_start(self, host: Host, task: Task) -> None:
+    def v2_runner_on_start(self, host: Host, task: Task) -> Any:
         self._yako.assign_current_task_config(host, task)
 
         if (task_config := self._yako.task_config) and (
@@ -519,7 +519,9 @@ class CallbackModule(CallbackBase):
 
         return super().v2_runner_on_start(host, task)
 
-    def v2_runner_on_ok(self, result: CallbackTaskResult, *args, **kwargs) -> None:
+    def v2_runner_on_ok(
+        self, result: CallbackTaskResult, *args: Any, **kwargs: Any
+    ) -> None:
         self._display.debug("Run v2_runner_on_ok")
 
         if task_config := self._yako.task_config:
@@ -533,7 +535,9 @@ class CallbackModule(CallbackBase):
             if task_config.assert_outputs:
                 _assert_outputs(task_config, result._result)  # noqa: SLF001
 
-    def v2_runner_on_failed(self, result: CallbackTaskResult, *args, **kwargs) -> None:
+    def v2_runner_on_failed(
+        self, result: CallbackTaskResult, *args: Any, **kwargs: Any
+    ) -> None:
         self._display.debug("Run v2_runner_on_failed")
 
         if task_config := self._yako.task_config:
@@ -544,7 +548,7 @@ class CallbackModule(CallbackBase):
                 task_config, should_be_skipped=False, should_fail=True, rescue_fail=True
             )
 
-    def v2_runner_on_skipped(self, result: CallbackTaskResult, **kwargs) -> None:
+    def v2_runner_on_skipped(self, result: CallbackTaskResult, **kwargs: Any) -> None:
         self._display.debug("Run v2_runner_on_skipped")
 
         if task_config := self._yako.task_config:
