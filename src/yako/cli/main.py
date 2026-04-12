@@ -5,6 +5,7 @@ from typing import Annotated
 import typer
 
 from yako.plugin_cli import run_plugin_callback_test
+from yako.repo import update_repo_cache
 from yako.runner.runner import run_tests_cli
 
 app = typer.Typer()
@@ -51,6 +52,20 @@ def run_test_callback(
     result = run_plugin_callback_test(path, capture_output=False)
     if result.returncode != 0:
         raise typer.Exit(code=result.returncode)
+
+
+@app.command(name="update-cache")
+def update_repo_cache_cli(
+    config: Annotated[
+        Path | None, typer.Option("-c", "--config", help="config path")
+    ] = None,
+    verbose: Annotated[
+        bool, typer.Option("-v", "--verbose", help="Show debug log.")
+    ] = False,
+) -> None:
+    _init_logging(verbose)
+
+    update_repo_cache(config)
 
 
 def main() -> None:

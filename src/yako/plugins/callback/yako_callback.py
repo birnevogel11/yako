@@ -9,7 +9,7 @@ from collections import ChainMap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from ansible import constants as C  # # noqa: N812
+from ansible import constants as C  # noqa: N812
 from ansible.errors import AnsibleUndefinedVariable
 from ansible.parsing.dataloader import DataLoader
 from ansible.plugins.callback import CallbackBase

@@ -11,6 +11,7 @@ from pydantic import (
     BeforeValidator,
     ConfigDict,
     ValidationError,
+    model_validator,
 )
 
 from yako.assert_check import AssertMode, AssertResult, AssertStmt, FileMode
@@ -65,13 +66,36 @@ class MockActionCustomConfig(BaseModel):
 class TestCaseAssert(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    name: str = ""
+    name: str
     value: Any | None = None
     mode: AssertMode = AssertMode.Equal
     msg: str | None = None
+    # TODO: (bv11) support file mode
     file: FileMode = FileMode.No
 
-    # TODO: (bv11) Check valid state, mode=after
+    @model_validator(mode="after")
+    def validate_mode(self) -> Self:
+        if (
+            self.mode
+            in (
+                AssertMode.IsNone,
+                AssertMode.IsNotNone,
+                AssertMode.IsTrue,
+                AssertMode.IsFalse,
+                AssertMode.IsNotTrue,
+                AssertMode.IsNotFalse,
+            )
+            and self.value is not None
+        ):
+            msg = (
+                "expected should not have value in these modes. "
+                f"name: {self.name}, mode: {self.mode}"
+            )
+            raise ValueError(msg)
+
+        # TODO: (bv11) Check file mode
+
+        return self
 
     def check(self, get_actual_value_func: Callable[[str], Any]) -> AssertResult:
         result = None
@@ -94,9 +118,7 @@ class TestCaseAssert(BaseModel):
             msg=self.msg or f"variable name: {self.name}",
         )
 
-    def _to_unknown_error_result(
-        self, err: Exception, msg: str | None = None
-    ) -> AssertResult:
+    def _to_unknown_error_result(self, err: Exception) -> AssertResult:
         return self._to_error_result(
             err,
             f"Unknown error. assert_stmt: {self}, err: {err}, err_type: {type(err)}",

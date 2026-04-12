@@ -97,6 +97,7 @@ class AssertStmt(BaseModel):
     expected: Any | None = None
     mode: AssertMode = AssertMode.Equal
     msg: str | None = None
+    # TODO: (bv11) support file mode
     file: FileMode = FileMode.No
 
     @model_validator(mode="after")

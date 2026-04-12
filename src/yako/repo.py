@@ -9,7 +9,7 @@ from diskcache import Cache
 from git import Repo
 from pydantic import BaseModel, ConfigDict, Field, NaiveDatetime
 
-from yako.config import GitUri
+from yako.config import GitUri, RepoRoleConfig, init_config
 
 logger = logging.getLogger(__name__)
 
@@ -60,9 +60,15 @@ class RepoCache:
             self.init()
 
         if self.query(uri):
-            logger.warning("The Git repo cache exists. Skip to add it again.")
+            logger.warning(
+                "The Git repo cache exists. Skip to add it again. uri: %s",
+                uri.cache_key,
+            )
 
         cache_path = self._repo_base_dir / uri.cache_key
+        logger.info(
+            "Add a new git repo cache. repo: %s, path: %s", uri.cache_key, cache_path
+        )
 
         # Clone the repo to the cache path
         Repo.clone_from(uri.uri, str(cache_path))
@@ -73,6 +79,20 @@ class RepoCache:
         )
 
         return cache_path
+
+    def pull(self, uri: GitUri) -> None:
+        if not self._is_init:
+            self.init()
+
+        if not (repo_path := self.query(uri)):
+            logger.warning(
+                "Fail to find git repo in cache. Add it now. repo: %s", uri.cache_key
+            )
+            repo_path = self.add(uri)
+
+        logger.info("Update git repo cache: %s, path: %s", uri.cache_key, repo_path)
+        repo = Repo(repo_path)
+        repo.remote().pull()
 
 
 class RepoPathResolver:
@@ -101,3 +121,18 @@ class RepoPathResolver:
             return path
 
         return self._repo_cache.add(repo_uri)
+
+
+def update_repo_cache(config_path: Path | None = None) -> None:
+    config = init_config(config_path=config_path)
+
+    repo_role_configs = [
+        roles_config
+        for roles_config in config.ansible.roles_path
+        if isinstance(roles_config, RepoRoleConfig)
+        and roles_config.repo not in config.ansible.repo_staging
+    ]
+
+    repo_cache = RepoCache()
+    for repo_role_config in repo_role_configs:
+        repo_cache.pull(repo_role_config.repo)
