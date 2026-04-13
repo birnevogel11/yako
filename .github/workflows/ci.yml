@@ -41,7 +41,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - run: uvx --from 'tox' --with tox-uv tox -e test
+      - run: uvx -p ${{ matrix.python-version }} --from 'tox' --with tox-uv tox -e test
 
   yako:
     runs-on: ubuntu-latest
@@ -55,4 +55,4 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python-version }}
-      - run: uvx --from 'tox' --with tox-uv tox -e yako
+      - run: uvx -p ${{ matrix.python-version }} --from 'tox' --with tox-uv tox -e yako
