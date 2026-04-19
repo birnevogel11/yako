@@ -226,10 +226,14 @@ class TestCaseResult(BaseModel):
     stdout: str = ""
     stderr: str = ""
     test_case: TestCase | None = None
+    execution_time_secs: float = 0.0
 
     @classmethod
     def from_test_case_and_cmd_result(
-        cls, case: TestCase, cmd_result: subprocess.CompletedProcess[str]
+        cls,
+        case: TestCase,
+        cmd_result: subprocess.CompletedProcess[str],
+        execution_time_secs: float = 0.0,
     ) -> Self:
         return cls(
             name=case.display_name,
@@ -244,6 +248,7 @@ class TestCaseResult(BaseModel):
             stdout=cmd_result.stdout,
             stderr=cmd_result.stderr,
             test_case=case,
+            execution_time_secs=execution_time_secs,
         )
 
     @classmethod

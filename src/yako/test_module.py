@@ -173,4 +173,7 @@ class TestSuiteResult(BaseModel):
             ),
             test_case_results=case_results,
             extra_err_msgs=extra_err_msgs or [],
+            execution_time_sec=sum(
+                result.execution_time_secs for result in case_results
+            ),
         )

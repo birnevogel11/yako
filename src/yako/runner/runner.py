@@ -120,9 +120,10 @@ def _run_test_cases(
                     case
                 )
             else:
-                cmd_result = case_runner.run(case)
+                with Timer() as timer:
+                    cmd_result = case_runner.run(case)
                 case_result = TestCaseResult.from_test_case_and_cmd_result(
-                    case, cmd_result
+                    case, cmd_result, execution_time_secs=timer.elapsed_time or 0.0
                 )
 
             case_results.append(case_result)
