@@ -70,7 +70,6 @@ class TestCaseAssert(BaseModel):
     value: Any | None = None
     mode: AssertMode = AssertMode.Equal
     msg: str | None = None
-    # TODO: (bv11) support file mode
     file: FileMode = FileMode.No
 
     @model_validator(mode="after")
@@ -93,7 +92,25 @@ class TestCaseAssert(BaseModel):
             )
             raise ValueError(msg)
 
-        # TODO: (bv11) Check file mode
+        if self.file not in (FileMode.No, FileMode.Right):
+            msg = (
+                "FileMode only supports 'right' or 'no' mode in test case assert. "
+                f"name: {self.name}, file: {self.file}"
+            )
+            raise ValueError(msg)
+
+        if self.file != FileMode.No and self.mode not in (
+            AssertMode.Equal,
+            AssertMode.NotEqual,
+            AssertMode.In,
+            AssertMode.NotIn,
+        ):
+            msg = (
+                "File mode is not supported in the mode. "
+                "The file mode should be 'no'"
+                f"name: {self.name}, file: {self.file}"
+            )
+            raise ValueError(msg)
 
         return self
 

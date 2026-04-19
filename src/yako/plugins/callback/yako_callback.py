@@ -542,8 +542,6 @@ class CallbackModule(CallbackBase):  # type: ignore[misc]
 
         if task_config := self._yako.task_config:
             _assert_outputs(task_config, result._result)  # noqa: SLF001
-
-        if task_config := self._yako.task_config:
             _assert_task_state(
                 task_config, should_be_skipped=False, should_fail=True, rescue_fail=True
             )
@@ -552,4 +550,5 @@ class CallbackModule(CallbackBase):  # type: ignore[misc]
         self._display.debug("Run v2_runner_on_skipped")
 
         if task_config := self._yako.task_config:
+            _assert_inputs(task_config, self._yako)
             _assert_task_state(task_config, should_be_skipped=True, should_fail=False)
