@@ -22,9 +22,8 @@ if TYPE_CHECKING:
     import subprocess
 
     from yako.config import YakoConfig
-    from yako.test_case import TestCase
+    from yako.test_case import TestCase, TestCaseResultState
     from yako.test_module import TestModule
-
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +31,14 @@ logger = logging.getLogger(__name__)
 class TestCaseRunner(Protocol):
     def init(self, base_dir: Path) -> None: ...
     def run(self, case: TestCase) -> subprocess.CompletedProcess[str]: ...
+
+
+class TestCaseProgressReporter(Protocol):
+    def report_test_module(self, module_name: str) -> None: ...
+    def report_test_case_start(self, case_name: str) -> None: ...
+    def report_test_case_end(
+        self, case_name: str, state: TestCaseResultState
+    ) -> None: ...
 
 
 def _collect_test_cases(
@@ -44,7 +51,7 @@ def _collect_test_cases(
     raw_module_configs, err_msgs = list_test_module_input_configs(config)
     test_suite = TestSuite.from_raw_module_configs(config, raw_module_configs)
 
-    collect_test_cases: list[tuple[TestModule, list[TestCase]]] = [
+    module_cases: list[tuple[TestModule, list[TestCase]]] = [
         (
             test_module,
             [
@@ -56,24 +63,57 @@ def _collect_test_cases(
         for test_module in sorted(test_suite.test_modules, key=lambda m: m.path)
     ]
 
-    return collect_test_cases, err_msgs
+    return module_cases, err_msgs
+
+
+class SimpleTestCaseProgressReporter:
+    def __init__(self) -> None:
+        self._curr_test_module: str | None = None
+
+    def report_test_module(self, module_name: str) -> None:
+        if module_name != self._curr_test_module:
+            if self._curr_test_module is not None:
+                print()
+
+            self._curr_test_module = module_name
+            print(self._curr_test_module, end=" ")
+
+    def report_test_case_start(self, case_name: str) -> None:
+        pass
+
+    def report_test_case_end(self, case_name: str, state: TestCaseResultState) -> None:
+        print(state.to_short_result_str(), end="", flush=True)
+
+
+class VerboseTestCaseProgressReporter:
+    def report_test_module(self, module_name: str) -> None:
+        pass
+
+    def report_test_case_start(self, case_name: str) -> None:
+        print(f"{case_name} ...")
+
+    def report_test_case_end(self, case_name: str, state: TestCaseResultState) -> None:
+        print(f"{case_name} ... {state.to_result_str()}")
 
 
 def _run_test_cases(
     case_runner: TestCaseRunner,
-    collect_test_cases: list[tuple[TestModule, list[TestCase]]],
+    module_cases: list[tuple[TestModule, list[TestCase]]],
     verbose_progress: bool,
 ) -> list[TestCaseResult]:
     """List all test cases from test modules and execute all matched test cases."""
     case_results: list[TestCaseResult] = []
+    case_reporter: TestCaseProgressReporter = (
+        VerboseTestCaseProgressReporter()
+        if verbose_progress
+        else SimpleTestCaseProgressReporter()
+    )
 
-    for test_module, test_cases in collect_test_cases:
-        if not verbose_progress:
-            print(str(test_module.path), end=" ", flush=True)
+    for test_module, test_cases in module_cases:
+        case_reporter.report_test_module(str(test_module.path))
 
         for case in test_cases:
-            if verbose_progress:
-                print(case.display_name, end=" ", flush=True)
+            case_reporter.report_test_case_start(case.display_name)
 
             if case.has_playbooks() and not case.does_playbook_exists():
                 case_result = TestCaseResult.from_failed_without_playbooks_test_case(
@@ -87,13 +127,7 @@ def _run_test_cases(
 
             case_results.append(case_result)
 
-            if verbose_progress:
-                print(f"... {case_result.state.to_result_str()}")
-            else:
-                print(case_result.state.to_short_result_str(), end="", flush=True)
-
-        if not verbose_progress:
-            print()
+            case_reporter.report_test_case_end(case.display_name, case_result.state)
 
     return case_results
 
@@ -107,15 +141,13 @@ def run_test_suite(
 ) -> TestSuiteResult:
     with tempfile.TemporaryDirectory() as raw_base_dir:
         case_runner.init(Path(raw_base_dir))
-        collect_test_cases, err_msgs = _collect_test_cases(
-            config, filter_key, list_only
-        )
+        module_cases, err_msgs = _collect_test_cases(config, filter_key, list_only)
         case_results = _run_test_cases(
-            case_runner, collect_test_cases, verbose_progress=verbose_progress
+            case_runner, module_cases, verbose_progress=verbose_progress
         )
 
         return TestSuiteResult.from_test_case_results(
-            collect_test_cases, case_results, extra_err_msgs=err_msgs
+            module_cases, case_results, extra_err_msgs=err_msgs
         )
 
 
