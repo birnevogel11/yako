@@ -165,6 +165,13 @@ class TestCase(BaseModel):
         )
         return super().model_post_init(context)
 
+    def list_only_name(self) -> str:
+        return (
+            f"{self.name}[self.parametrized_name]"
+            if self.parametrized_name
+            else self.name
+        )
+
     @model_validator(mode="after")
     def validate_content(self) -> Self:
         _validate_tasks_and_playbooks(self)
