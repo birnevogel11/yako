@@ -105,7 +105,6 @@ class AssertResult(BaseModel):
     expected_value: Any | None
     mode: AssertMode
     err_msg: str | None = None
-    exception: Any | None = None
 
 
 class AssertStmt(BaseModel):
