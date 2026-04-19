@@ -10,7 +10,13 @@ from typing import TYPE_CHECKING, Annotated, ClassVar
 from urllib.parse import urlparse
 
 import yaml
-from pydantic import AnyUrl, BaseModel, ConfigDict, ValidationError, WrapValidator
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    ConfigDict,
+    ValidationError,
+    WrapValidator,
+)
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -122,6 +128,7 @@ class RepoRoleConfig(BaseModel):
 
     repo: ParsedGitUri
     path: str = "roles"
+    update_secs: int = 86400
 
 
 class AnsibleConfig(BaseModel):

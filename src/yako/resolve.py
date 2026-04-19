@@ -19,7 +19,9 @@ def resolve_roles_path(ansible_config: AnsibleConfig) -> list[Path]:
             case Path():
                 path = role_path.resolve()
             case RepoRoleConfig():
-                repo_path = repo_resolver.resolve(role_path.repo)
+                repo_path = repo_resolver.resolve(
+                    role_path.repo, update_secs=role_path.update_secs
+                )
                 path = repo_path / role_path.path
 
         paths.append(path)
