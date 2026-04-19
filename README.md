@@ -343,17 +343,6 @@ given:
       mock: {}
 ```
 
-### File Output for Debugging
-
-Write actual/expected values to files for debugging complex comparisons:
-
-```yaml
-assert_outputs:
-  - name: "large_config"
-    value: "{{ expected }}"
-    file: "both"     # Options: "no" (default), "left", "right", "both"
-```
-
 ## Parametrization
 
 Run the same test case with different inputs:

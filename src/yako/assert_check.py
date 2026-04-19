@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import enum
 import unittest
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -15,6 +16,23 @@ class FileMode(enum.Enum):
     Left = "left"
     Right = "right"
     Both = "both"
+
+    def expand_file_mode_value(self, left: Any, right: Any) -> tuple[Any, Any]:
+        if self == FileMode.No:
+            return left, right
+
+        left_value = left
+        right_value = right
+        match self:
+            case FileMode.Left:
+                left_value = Path(left).read_text()
+            case FileMode.Right:
+                right_value = Path(right).read_text()
+            case FileMode.Both:
+                left_value = Path(left).read_text()
+                right_value = Path(right).read_text()
+
+        return left_value, right_value
 
 
 class AssertMode(enum.Enum):
@@ -97,7 +115,6 @@ class AssertStmt(BaseModel):
     expected: Any | None = None
     mode: AssertMode = AssertMode.Equal
     msg: str | None = None
-    # TODO: (bv11) support file mode
     file: FileMode = FileMode.No
 
     @model_validator(mode="after")
@@ -120,18 +137,40 @@ class AssertStmt(BaseModel):
             )
             raise ValueError(msg)
 
+        if self.file != FileMode.No and self.mode not in (
+            AssertMode.Equal,
+            AssertMode.NotEqual,
+            AssertMode.In,
+            AssertMode.NotIn,
+        ):
+            msg = (
+                "File mode is not supported in the mode. "
+                "The file mode should be 'no'"
+                f"actual: {self.actual}, file: {self.file}"
+            )
+            raise ValueError(msg)
+
         return self
 
     def check(self) -> AssertResult:
+        actual_value, expected_value = self.file.expand_file_mode_value(
+            self.actual, self.expected
+        )
         try:
-            MAPPING_ASSERT_FUNCTIONS[self.mode](self.actual, self.expected)
-        except AssertionError as err:
+            MAPPING_ASSERT_FUNCTIONS[self.mode](actual_value, expected_value)
+        except (OSError, AssertionError) as err:
+            match err:
+                case OSError():
+                    err_msg = f"Failed to read files - {err}"
+                case AssertionError():
+                    err_msg = str(err) if not self.msg else f"{err} - {self.msg}"
+
             return AssertResult(
                 passed=False,
                 actual_value=self.actual,
                 expected_value=self.expected,
                 mode=self.mode,
-                err_msg=str(err) if not self.msg else f"{err} - {self.msg}",
+                err_msg=err_msg,
             )
 
         return AssertResult(
