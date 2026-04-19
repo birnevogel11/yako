@@ -43,7 +43,7 @@ def print_error_messages(extra_err_msgs: list[str]) -> None:
 
 
 def _print_summary_line(summary_tokens: list[str], execution_time_sec: float) -> None:
-    tokens = [*summary_tokens, f"in {execution_time_sec:.2f} sec"]
+    tokens = [*summary_tokens, f"in {execution_time_sec:.2f}sec"]
 
     console.print()
     console.rule(" ".join(tokens), align="center", characters="=")
@@ -81,6 +81,7 @@ def print_summary(result: TestSuiteResult) -> None:
 
 
 def report_test_config(config: YakoConfig) -> None:
+    console.rule("[bold]Yako test session starts[/]", align="center", characters="=")
     console.print(
         "base path(s):", ", ".join(str(p) for p in config.base_dir), highlight=False
     )

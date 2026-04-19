@@ -22,9 +22,15 @@ class RepoCacheEntry(BaseModel):
     init_time: NaiveDatetime = Field(
         default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
     )
-    update_time: NaiveDatetime = Field(
+    last_pull_time: NaiveDatetime = Field(
         default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
     )
+
+    def is_expired(self, update_secs: int) -> bool:
+        update_time = datetime.datetime.now(tz=datetime.UTC) + datetime.timedelta(
+            seconds=update_secs
+        )
+        return self.last_pull_time >= update_time
 
 
 class RepoCache:
@@ -47,23 +53,24 @@ class RepoCache:
 
         self.is_init = True
 
-    def query(self, uri: GitUri) -> Path | None:
+    def query(self, uri: GitUri) -> RepoCacheEntry | None:
         if not self._is_init:
             self.init()
 
         if entry := self._cache.get(uri.cache_key):
-            return Path(RepoCacheEntry.model_validate_json(entry).path)
+            return RepoCacheEntry.model_validate_json(entry)
         return None
 
-    def add(self, uri: GitUri) -> Path:
+    def add(self, uri: GitUri) -> RepoCacheEntry:
         if not self._is_init:
             self.init()
 
-        if self.query(uri):
+        if entry := self.query(uri):
             logger.warning(
                 "The Git repo cache exists. Skip to add it again. uri: %s",
                 uri.cache_key,
             )
+            return entry
 
         cache_path = self._repo_base_dir / uri.cache_key
         logger.info(
@@ -72,27 +79,34 @@ class RepoCache:
 
         # Clone the repo to the cache path
         Repo.clone_from(uri.uri, str(cache_path))
+        entry = RepoCacheEntry(uri=uri, path=cache_path)
 
-        self._cache.add(
-            uri.cache_key,
-            RepoCacheEntry(uri=uri, path=cache_path).model_dump_json(),
-        )
+        self._cache.add(uri.cache_key, entry.model_dump_json())
+        return entry
 
-        return cache_path
-
-    def pull(self, uri: GitUri) -> None:
+    def pull(self, uri: GitUri) -> RepoCacheEntry:
         if not self._is_init:
             self.init()
 
-        if not (repo_path := self.query(uri)):
+        if not (entry := self.query(uri)):
             logger.warning(
                 "Fail to find git repo in cache. Add it now. repo: %s", uri.cache_key
             )
-            repo_path = self.add(uri)
+            entry = self.add(uri)
 
-        logger.info("Update git repo cache: %s, path: %s", uri.cache_key, repo_path)
-        repo = Repo(repo_path)
+        logger.info("Update git repo cache: %s, path: %s", uri.cache_key, entry.path)
+        repo = Repo(entry.path)
         repo.remote().pull()
+
+        updated_entry = RepoCacheEntry(
+            uri=entry.uri,
+            path=entry.path,
+            init_time=entry.init_time,
+            last_pull_time=datetime.datetime.now(tz=datetime.UTC),
+        )
+        self._cache.add(updated_entry.uri.cache_key, updated_entry.model_dump_json())
+
+        return updated_entry
 
 
 class RepoPathResolver:
@@ -102,7 +116,7 @@ class RepoPathResolver:
         self._repo_cache = repo_cache or RepoCache()
         self._repo_staging = repo_staging
 
-    def resolve(self, repo_uri: str | GitUri) -> Path:
+    def resolve(self, repo_uri: str | GitUri, update_secs: int | None = None) -> Path:
         """Resolve git uri to path.
 
         The resolver does not support branch for now.
@@ -117,10 +131,14 @@ class RepoPathResolver:
         if path := self._repo_staging.get(repo_uri, None):
             return path
 
-        if path := self._repo_cache.query(repo_uri):
-            return path
+        if entry := self._repo_cache.query(repo_uri):
+            if update_secs and entry.is_expired(update_secs):
+                logger.info("Update git repo %s to latest ...", entry.uri.uri)
+                entry = self._repo_cache.pull(entry.uri)
 
-        return self._repo_cache.add(repo_uri)
+            return entry.path
+
+        return self._repo_cache.add(repo_uri).path
 
 
 def update_repo_cache(config_path: Path | None = None) -> None:
