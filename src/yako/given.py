@@ -4,7 +4,7 @@ import itertools
 from collections import ChainMap, OrderedDict
 from typing import TYPE_CHECKING, Annotated, Any
 
-import ansible
+from ansible.errors import AnsibleUndefinedVariable
 from pydantic import (
     AfterValidator,
     BaseModel,
@@ -63,6 +63,7 @@ class MockActionCustomConfig(BaseModel):
         return new_action_name, self.custom_action[new_action_name]
 
 
+@not_test
 class TestCaseAssert(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -119,7 +120,7 @@ class TestCaseAssert(BaseModel):
         try:
             actual_value = get_actual_value_func(self.name)
             result = self._to_assert_stmt(actual_value).check()
-        except (KeyError, ansible.errors.AnsibleUndefinedVariable) as err:
+        except (KeyError, AnsibleUndefinedVariable) as err:
             result = self._to_var_not_found_result(err)
         except Exception as err:  # noqa: BLE001
             result = self._to_unknown_error_result(err)
@@ -137,23 +138,19 @@ class TestCaseAssert(BaseModel):
 
     def _to_unknown_error_result(self, err: Exception) -> AssertResult:
         return self._to_error_result(
-            err,
             f"Unknown error. assert_stmt: {self}, err: {err}, err_type: {type(err)}",
         )
 
     def _to_var_not_found_result(self, err: Exception) -> AssertResult:
-        return self._to_error_result(
-            err, f"Variable: {self.name} not found, err: {err}"
-        )
+        return self._to_error_result(f"Variable: {self.name} not found, err: {err}")
 
-    def _to_error_result(self, err: Exception, msg: str) -> AssertResult:
+    def _to_error_result(self, msg: str) -> AssertResult:
         return AssertResult(
             passed=False,
             actual_value=None,
             expected_value=self.value,
             mode=self.mode,
             err_msg=msg,
-            exception=err,
         )
 
 
