@@ -201,26 +201,18 @@ class TestCaseResultState(enum.Enum):
     Skipped = "skipped"
 
     def to_short_result_str(self) -> str:
-        match self:
-            case TestCaseResultState.Success:
-                return "."
-            case TestCaseResultState.Failed:
-                return "F"
-            case TestCaseResultState.Error:
-                return "E"
-            case TestCaseResultState.Skipped:
-                return "S"
+        return TEST_CASE_RESULT_STATE_SHORT_MAPPING[self]
 
     def to_result_str(self) -> str:
-        match self:
-            case TestCaseResultState.Success:
-                return "PASS"
-            case TestCaseResultState.Failed:
-                return "FAILED"
-            case TestCaseResultState.Error:
-                return "ERROR"
-            case TestCaseResultState.Skipped:
-                return "SKIPPED"
+        return self.value.upper()
+
+
+TEST_CASE_RESULT_STATE_SHORT_MAPPING = {
+    TestCaseResultState.Success: ".",
+    TestCaseResultState.Failed: "F",
+    TestCaseResultState.Error: "E",
+    TestCaseResultState.Skipped: "S",
+}
 
 
 class TestCaseResult(BaseModel):
