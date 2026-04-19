@@ -175,7 +175,6 @@ class DockerRunnerConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     image_name: str = "ghcr.io/birnevogel11/yako:latest"
-    # dockerfile: Path = ""  # TODO: Should we support it?  # noqa: ERA001
     workspace_dir: Path = Path("/home/ubuntu/workspace")
     yako_venv_dir: Path = Path("/home/ubuntu/app")
     yako_src_dir: Path = Path("/home/ubuntu/yako/src/yako")
