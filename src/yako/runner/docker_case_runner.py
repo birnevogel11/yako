@@ -202,7 +202,8 @@ class DockerTestCaseRunner:
             logger.debug("Test case path: %s", case.path)
 
             yako_test_case_path = ws_dir / "test_case.yaml"
-            case.dump_yako_callback_config_file(yako_test_case_path)
+            callback_config = case.dump_yako_callback_config(yako_test_case_path)
+            logger.debug("Callback config: %s", callback_config)
 
             host_test_case_dir_path, ct_test_case_dir_path = _remap_test_case_dir_path(
                 case

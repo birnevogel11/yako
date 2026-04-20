@@ -8,7 +8,7 @@ YAKO_TEST_CASE_CONFIG:
   given:
     mock_tasks:
       - name: "Mock target"
-        extra_vars:
+        vars:
           task_extra_var: "whats_life_mean_to_you"
   tasks:
     - name: Mock target

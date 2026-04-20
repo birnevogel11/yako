@@ -5,7 +5,7 @@ YAKO_TEST_CASE_CONFIG:
   name: "test_copy_file_basic"
   path: "fake"
   given:
-    extra_vars:
+    vars:
       tmp_dest_folder_name: "nested_fake"
     files:
       - "hello.txt"

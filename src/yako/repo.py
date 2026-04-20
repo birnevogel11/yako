@@ -98,11 +98,8 @@ class RepoCache:
         repo = Repo(entry.path)
         repo.remote().pull()
 
-        updated_entry = RepoCacheEntry(
-            uri=entry.uri,
-            path=entry.path,
-            init_time=entry.init_time,
-            last_pull_time=datetime.datetime.now(tz=datetime.UTC),
+        updated_entry = entry.model_copy(
+            update={"last_pull_time": datetime.datetime.now(tz=datetime.UTC)}
         )
         self._cache.add(updated_entry.uri.cache_key, updated_entry.model_dump_json())
 

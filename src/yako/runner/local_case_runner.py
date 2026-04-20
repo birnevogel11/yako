@@ -83,7 +83,8 @@ class LocalTestCaseRunner:
                 case = _create_playbook_from_tasks(case, ws_dir)
 
             yako_test_case_path = ws_dir / "test_case.yaml"
-            case.dump_yako_callback_config_file(yako_test_case_path)
+            callback_config = case.dump_yako_callback_config(yako_test_case_path)
+            logger.debug("Callback config: %s", callback_config)
 
             cmd, env = make_ansible_playbook_cmd(
                 ansible_playbook_bin=self._ansible_playbook_bin,

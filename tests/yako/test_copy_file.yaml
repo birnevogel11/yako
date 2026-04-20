@@ -1,7 +1,7 @@
 test_cases:
   - name: "test_copy_file_basic"
     given:
-      extra_vars:
+      vars:
         tmp_dest_folder_name: "nested_fake"
       files:
         - "hello.txt"
@@ -82,7 +82,7 @@ test_cases:
 
   - name: "test_copy_file_dir"
     given:
-      extra_vars:
+      vars:
         tmp_dest_folder_name: "nested_fake"
       files:
         - "hello_air/"
