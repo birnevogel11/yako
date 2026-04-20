@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from typing import TYPE_CHECKING
+from unittest.mock import ANY
 
 import pydantic
 import pytest
@@ -77,7 +78,7 @@ def test_invalid_custom_action_config() -> None:
                     "another_fact": {"answer": 43},
                 },
                 "ctx": {"error": "custom_action must have exactly one key-value pair"},
-                "url": "https://errors.pydantic.dev/2.12/v/value_error",
+                "url": ANY,
             }
         ]
     )
