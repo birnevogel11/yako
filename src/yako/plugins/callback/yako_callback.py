@@ -78,7 +78,7 @@ class YakoTestConfig(TestCase):
             msg = f"{cls.YAKO_TEST_CONFIG_KEY} not found!"
             raise YakoAnsiblePluginError(msg)
 
-        if extra_vars := raw_test_config.get("given", {}).get("extra_vars"):
+        if extra_vars := raw_test_config.get("given", {}).get("vars"):
             # Merge extra_vars into play_extra_vars_base for variable templating
             play_extra_vars_base.update(extra_vars)
 

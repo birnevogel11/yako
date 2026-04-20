@@ -84,13 +84,13 @@ Test files are YAML files named `test_*.yaml`, placed under `tests/yako/` by def
 ```yaml
 # Module-level given (applies to all test cases in this file)
 given:
-  extra_vars:
+  vars:
     env: "testing"
 
 test_cases:
   - name: "test_something"
     given:
-      extra_vars:
+      vars:
         feature_flag: true
       mock_tasks:
         - name: "Install packages"
@@ -157,7 +157,7 @@ tests/yako/
 The `given` block configures the test environment. It can be defined at three levels, which merge together (global → module → test case):
 
 - **`files`** and **`mock_tasks`**: concatenated across levels
-- **`extra_vars`**: merged as a dict (more specific level wins)
+- **`vars`**: merged as a dict (more specific level wins)
 
 ### Extra Variables
 
@@ -165,7 +165,7 @@ Inject Ansible variables into the playbook run:
 
 ```yaml
 given:
-  extra_vars:
+  vars:
     target_user: "deploy"
     packages:
       - nginx
@@ -253,7 +253,7 @@ Inject variables that are only available during a specific task:
 given:
   mock_tasks:
     - name: "Deploy application"
-      extra_vars:
+      vars:
         deploy_version: "1.2.3"
       mock: {}
 ```
@@ -357,10 +357,10 @@ test_cases:
 
     parametrize:
       staging:
-        extra_vars:
+        vars:
           target_env: "staging"
       production:
-        extra_vars:
+        vars:
           target_env: "production"
 ```
 
@@ -368,7 +368,7 @@ This creates two test cases:
 - `test_deploy.yaml::test_deploy[staging]`
 - `test_deploy.yaml::test_deploy[production]`
 
-Each variant can override `extra_vars`, `files`, and `mock_tasks`.
+Each variant can override `vars`, `files`, and `mock_tasks`.
 
 ## Configuration
 
@@ -479,7 +479,7 @@ Define defaults that apply to **all** test cases:
 
 ```yaml
 given:
-  extra_vars:
+  vars:
     ansible_os_family: "Debian"
   mock_tasks:
     - name: "Gather facts"

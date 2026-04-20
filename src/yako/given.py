@@ -10,6 +10,7 @@ from pydantic import (
     BaseModel,
     BeforeValidator,
     ConfigDict,
+    Field,
     ValidationError,
     model_validator,
 )
@@ -158,7 +159,7 @@ class TestTaskConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: str
-    extra_vars: dict[str, Any] = {}
+    extra_vars: dict[str, Any] = Field(default_factory=dict, alias="vars")
     mock: MockActionConfig | MockActionCustomConfig | None = None
 
     assert_inputs: list[TestCaseAssert] = []
@@ -213,7 +214,7 @@ class TestCaseGiven(BaseModel):
     files: Annotated[
         list[CopyFileConfig], BeforeValidator(_parse_copy_file_config_list)
     ] = []
-    extra_vars: dict[str, Any] = {}
+    extra_vars: dict[str, Any] = Field(default_factory=dict, alias="vars")
     mock_tasks: list[TestTaskConfig] = []
 
     @classmethod
@@ -230,7 +231,7 @@ class TestCaseGiven(BaseModel):
                 "files": list(
                     itertools.chain.from_iterable(given.files for given in givens)
                 ),
-                "extra_vars": dict(ChainMap(*(given.extra_vars for given in givens))),
+                "vars": dict(ChainMap(*(given.extra_vars for given in givens))),
                 "mock_tasks": list(mock_tasks.values()),
             }
         )

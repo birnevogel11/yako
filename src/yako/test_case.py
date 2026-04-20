@@ -178,8 +178,13 @@ class TestCase(BaseModel):
 
         return self
 
-    def dump_yako_callback_config_file(self, output_path: Path) -> None:
-        output_path.write_text(safe_dump({YAKO_TEST_CONFIG_KEY: self.model_dump()}))
+    def dump_yako_callback_config(
+        self, output_path: Path | None = None
+    ) -> dict[str, Any]:
+        callback_config = {YAKO_TEST_CONFIG_KEY: self.model_dump(by_alias=True)}
+        if output_path:
+            output_path.write_text(safe_dump(callback_config))
+        return callback_config
 
     def is_match(self, filter_key: str) -> bool:
         return filter_key in self.display_name
@@ -216,6 +221,8 @@ TEST_CASE_RESULT_STATE_SHORT_MAPPING = {
 
 
 class TestCaseResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     name: str = ""
     path: Path = Path.cwd()
 

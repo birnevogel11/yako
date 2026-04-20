@@ -16,25 +16,30 @@ console = rich.console.Console()
 
 
 def print_failure_cases(result: TestSuiteResult) -> None:
-    for case_result in result.test_case_results:
-        if case_result.state in (
+    failed_results = (
+        case_result
+        for case_result in result.test_case_results
+        if case_result.state
+        in (
             TestCaseResultState.Error,
             TestCaseResultState.Failed,
-        ):
-            console.rule(
-                (
-                    f"Test Case: {case_result.name}, "
-                    f"State: {case_result.state.to_result_str()}"
-                ),
-                style="bold red",
-                align="center",
-            )
-            console.print("Return Code:", style="bold")
-            console.print(case_result.return_code)
-            console.print("Stdout:", style="bold")
-            print(case_result.stdout)
-            console.print("Stderr:", style="bold")
-            print(case_result.stderr)
+        )
+    )
+    for case_result in failed_results:
+        console.rule(
+            (
+                f"Test Case: {case_result.name}, "
+                f"State: {case_result.state.to_result_str()}"
+            ),
+            style="bold red",
+            align="center",
+        )
+        console.print("Return Code:", style="bold")
+        console.print(case_result.return_code)
+        console.print("Stdout:", style="bold")
+        print(case_result.stdout)
+        console.print("Stderr:", style="bold")
+        print(case_result.stderr)
 
 
 def print_error_messages(extra_err_msgs: list[str]) -> None:
