@@ -11,12 +11,13 @@ from yako.consts import YAKO_TEST_CONFIG_KEY
 from yako.given import TestCaseGiven
 from yako.utils import not_test
 from yako.yaml import safe_dump
+from yako.config import RepoRoleConfig
 
 if TYPE_CHECKING:
     import subprocess
     from typing import Self
 
-    from yako.config import YakoConfig, RepoRoleConfig
+    from yako.config import YakoConfig
     from yako.test_module import TestModuleInputConfig
 
 logger = logging.getLogger(__name__)
