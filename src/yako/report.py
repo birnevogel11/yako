@@ -34,6 +34,7 @@ def print_failure_cases(result: TestSuiteResult) -> None:
             style="bold red",
             align="center",
         )
+        console.print(case_result.msg)
         console.print("Return Code:", style="bold")
         console.print(case_result.return_code)
         console.print("Stdout:", style="bold")
