@@ -78,14 +78,16 @@ def _resolve_playbooks_path(
 
 
 def _validate_tasks_and_playbooks(test_case: TestCaseInputConfig | TestCase) -> None:
-    fields_exist = [f for f in [test_case.playbooks, test_case.roles, test_case.tasks] if f]
+    fields = [test_case.playbooks, test_case.roles, test_case.tasks]
+    fields_exist = [f for f in fields if f]
 
     if len(fields_exist) == 0:
         msg = f"Test case requires playbooks, roles, or tasks. name: {test_case.name}"
         raise ValueError(msg)
 
     if len(fields_exist) > 1:
-        msg = f"Test case can only provide one of: playbooks, roles, or tasks. name: {test_case.name}"
+        msg = (f"Test case can only provide one of: ",
+               f"playbooks, roles, or tasks. name: {test_case.name}")
         raise ValueError(msg)
 
 
@@ -291,5 +293,7 @@ class TestCaseResult(BaseModel):
         )
 
 
-def make_content_playbook(raw_content: list[dict[str, Any]], field_name: str = "tasks") -> list[dict[str, Any]]:
+def make_content_playbook(
+        raw_content: list[dict[str, Any]],
+        field_name: str = "tasks") -> list[dict[str, Any]]:
     return [{**PLAYBOOK_DEFAULT_CONTENT, field_name: raw_content}]
