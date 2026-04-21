@@ -193,8 +193,8 @@ class YakoInternalState(BaseModel):
             next(
                 (
                     task_config
-                    for task_config in self.test_config.given.mock_tasks
-                    if new_task_name == task_config.name
+                    for task_config in self.test_config.given.state
+                    if new_task_name == task_config.task
                 ),
                 None,
             ),
@@ -291,7 +291,7 @@ def _assert_outputs(
         task_config.assert_outputs,
         var_templar.resolve_variable_expression,
     )
-    _report_assert(task_config.name, passed_asserts, failed_asserts, "outputs")
+    _report_assert(task_config.task, passed_asserts, failed_asserts, "outputs")
 
 
 def _report_assert(
@@ -464,6 +464,8 @@ class CallbackModule(CallbackBase):  # type: ignore[misc]
         play_extra_vars = play.get_variable_manager().extra_vars
         try:
             test_config = YakoTestConfig.from_playbook(play_extra_vars)
+            print("476")
+            print(test_config)
         except ValidationError as err:
             msg = f"Invalid Yako test case config. err: {err.errors()}"
             raise YakoAnsiblePluginError(msg)  # noqa: B904

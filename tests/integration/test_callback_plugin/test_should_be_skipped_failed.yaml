@@ -8,8 +8,8 @@ YAKO_TEST_CASE_CONFIG:
   name: "test_should_be_skipped"
   path: "fake"
   given:
-    mock_tasks:
-      - name: Mock target
+    state:
+      - task: Mock target
         should_be_skipped: true
 
   tasks:

@@ -1,6 +1,6 @@
 given:
-  mock_tasks:
-    - name: Create a temp folder
+  state:
+    - task: Create a temp folder
       mock: {}
 
 test_cases:
@@ -20,8 +20,8 @@ test_cases:
 
   - name: "test_given_override"
     given:
-      mock_tasks:
-        - name: Create a temp folder
+      state:
+        - task: Create a temp folder
           mock:
             changed: true
             result_dict:

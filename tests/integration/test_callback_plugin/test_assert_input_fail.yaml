@@ -8,8 +8,8 @@ YAKO_TEST_CASE_CONFIG:
   name: "test_assert_input_fail"
   path: "fake"
   given:
-    mock_tasks:
-      - name: Hello world
+    state:
+      - task: Hello world
         assert_inputs:
           - name: msg
             value: World
