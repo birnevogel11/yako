@@ -118,7 +118,7 @@ class TestCase(BaseModel):
     display_name: str = ""
     given: TestCaseGiven = TestCaseGiven()
     playbooks: list[Path] = []
-    roles: list[Path] = []
+    roles: list[str] = []
     tasks: list[dict[str, Any]] = []
 
     @classmethod
@@ -294,6 +294,6 @@ class TestCaseResult(BaseModel):
 
 
 def make_content_playbook(
-        raw_content: list[dict[str, Any]],
+        raw_content: list[dict[str, Any] | str],
         field_name: str = "tasks") -> list[dict[str, Any]]:
     return [{**PLAYBOOK_DEFAULT_CONTENT, field_name: raw_content}]
