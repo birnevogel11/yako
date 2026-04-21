@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     import subprocess
     from typing import Self
 
-    from yako.config import YakoConfig
+    from yako.config import YakoConfig, RepoRoleConfig
     from yako.test_module import TestModuleInputConfig
 
 logger = logging.getLogger(__name__)
@@ -77,12 +77,13 @@ def _resolve_playbooks_path(
     return resolved_paths
 
 def _resolve_roles_path(
-    test_module_path: Path, roles_path: list[str], base_dirs: list[Path] | None = None,
-ansible_roles_paths: list[Path] | None = None) -> list[Path]:
+    test_module_path: Path, roles_path: list[str], base_dirs: list[Path] = [],
+ansible_roles_paths: list[Path] = []) -> list[Path]:
     search_bases = [
         test_module_path.resolve().parent,
         Path.cwd()
     ]
+
     search_bases.extend([p.resolve() for p in ansible_roles_paths])
     search_bases.extend([p.resolve() for p in base_dirs])
 
@@ -110,13 +111,14 @@ def _validate_tasks_and_playbooks(test_case: TestCaseInputConfig | TestCase) -> 
     fields_exist = [f for f in fields if f]
 
     if len(fields_exist) == 0:
-        msg = (f"Test case requires playbooks, roles, or tasks. name: {test_case.name}")
-        raise ValueError(msg)
+        msg = ("Test case requires playbooks, roles, or tasks. ",
+               f"name: {test_case.name}")
+        raise ValueError("".join(msg))
 
     if len(fields_exist) > 1:
         msg = ("Test case can only provide one of: ",
                f"playbooks, roles, or tasks. name: {test_case.name}")
-        raise ValueError(msg)
+        raise ValueError("".join(msg))
 
 
 @not_test
@@ -171,6 +173,7 @@ class TestCase(BaseModel):
                 for name, given in case_config.parametrize.items()
             }
 
+        roles_paths = [Path(p.path if isinstance(p, RepoRoleConfig) else p) for p in config.ansible.roles_path]
         return [
             cls(
                 name=case_config.name,
@@ -182,7 +185,7 @@ class TestCase(BaseModel):
                 ),
                 roles=_resolve_roles_path(
                     module_config.path, case_config.roles,
-                    config.base_dir, config.ansible.roles_path
+                    config.base_dir, roles_paths
                 ),
                 tasks=case_config.tasks,
             )
@@ -324,7 +327,8 @@ class TestCaseResult(BaseModel):
         )
 
 
-def make_content_playbook(
-        raw_content: list[dict[str, Any]],
-        field_name: str = "tasks") -> list[dict[str, Any]]:
-    return [{**PLAYBOOK_DEFAULT_CONTENT, field_name: raw_content}]
+def make_tasks_playbook(raw_content: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{**PLAYBOOK_DEFAULT_CONTENT, "tasks": raw_content}]
+
+def make_roles_playbook(raw_content: list[str]) -> list[dict[str, Any]]:
+    return [{**PLAYBOOK_DEFAULT_CONTENT, "roles": raw_content}]

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from yako.ansible import make_ansible_playbook_cmd, make_yako_ansible_config
 from yako.resolve import resolve_roles_path
 from yako.runner.utils import run_command
-from yako.test_case import make_content_playbook
+from yako.test_case import make_tasks_playbook, make_roles_playbook
 from yako.yaml import safe_dump
 
 if TYPE_CHECKING:
@@ -49,7 +49,7 @@ def _create_local_ansible_config(
 
 def _create_playbook_from_tasks(case: TestCase, ws_dir: Path) -> TestCase:
     playbook_path = ws_dir / "test_case_playbook.yaml"
-    content = make_content_playbook(case.tasks, field_name="tasks")
+    content = make_tasks_playbook(case.tasks)
     playbook_path.write_text(safe_dump(content))
     return case.model_copy(update={"playbooks": [playbook_path], "tasks": []})
 
@@ -57,7 +57,7 @@ def _create_playbook_from_tasks(case: TestCase, ws_dir: Path) -> TestCase:
 def _create_playbook_from_roles(case: TestCase, ws_dir: Path) -> TestCase:
     playbook_path = ws_dir / "test_case_playbook.yaml"
     role_names = [role.name for role in case.roles]
-    content = make_content_playbook(role_names, field_name="roles")
+    content = make_roles_playbook(role_names)
     playbook_path.write_text(safe_dump(content))
     return case.model_copy(update={"playbooks": [playbook_path], "roles": []})
 
