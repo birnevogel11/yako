@@ -86,7 +86,7 @@ def _validate_tasks_and_playbooks(test_case: TestCaseInputConfig | TestCase) -> 
         raise ValueError(msg)
 
     if len(fields_exist) > 1:
-        msg = (f"Test case can only provide one of: ",
+        msg = ("Test case can only provide one of: ",
                f"playbooks, roles, or tasks. name: {test_case.name}")
         raise ValueError(msg)
 
