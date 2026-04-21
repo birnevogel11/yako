@@ -56,7 +56,8 @@ def _create_playbook_from_tasks(case: TestCase, ws_dir: Path) -> TestCase:
 
 def _create_playbook_from_roles(case: TestCase, ws_dir: Path) -> TestCase:
     playbook_path = ws_dir / "test_case_playbook.yaml"
-    content = make_content_playbook(case.roles, field_name="roles")
+    role_names = [role.name for role in case.roles]
+    content = make_content_playbook(role_names, field_name="roles")
     playbook_path.write_text(safe_dump(content))
     return case.model_copy(update={"playbooks": [playbook_path], "roles": []})
 

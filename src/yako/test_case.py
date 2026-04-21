@@ -76,13 +76,41 @@ def _resolve_playbooks_path(
 
     return resolved_paths
 
+def _resolve_roles_path(
+    test_module_path: Path, roles_path: list[str], base_dirs: list[Path] | None = None,
+ansible_roles_paths: list[Path] | None = None) -> list[Path]:
+    search_bases = [
+        test_module_path.resolve().parent,
+        Path.cwd()
+    ]
+    search_bases.extend([p.resolve() for p in ansible_roles_paths])
+    search_bases.extend([p.resolve() for p in base_dirs])
+
+    resolved_paths = []
+    for name in roles_path:
+        resolved_path = None
+        if (resolved_path := Path(name)).is_absolute():
+            logger.debug("%s is an absolute path. Skip to resolve it")
+        else:
+            resolved_path = next((base / name for base in search_bases), None)
+            if not resolved_path:
+                msg = (
+                    f"Can not resolve the role path. "
+                    f"test_module_path: {test_module_path}, "
+                    f"role_path: {name}"
+                )
+                raise ValueError(msg)
+
+        resolved_paths.append(resolved_path)
+
+    return resolved_paths
 
 def _validate_tasks_and_playbooks(test_case: TestCaseInputConfig | TestCase) -> None:
     fields = [test_case.playbooks, test_case.roles, test_case.tasks]
     fields_exist = [f for f in fields if f]
 
     if len(fields_exist) == 0:
-        msg = f"Test case requires playbooks, roles, or tasks. name: {test_case.name}"
+        msg = (f"Test case requires playbooks, roles, or tasks. name: {test_case.name}")
         raise ValueError(msg)
 
     if len(fields_exist) > 1:
@@ -118,7 +146,7 @@ class TestCase(BaseModel):
     display_name: str = ""
     given: TestCaseGiven = TestCaseGiven()
     playbooks: list[Path] = []
-    roles: list[str] = []
+    roles: list[Path] = []
     tasks: list[dict[str, Any]] = []
 
     @classmethod
@@ -152,7 +180,10 @@ class TestCase(BaseModel):
                 playbooks=_resolve_playbooks_path(
                     module_config.path, case_config.playbooks
                 ),
-                roles=case_config.roles,
+                roles=_resolve_roles_path(
+                    module_config.path, case_config.roles,
+                    config.base_dir, config.ansible.roles_path
+                ),
                 tasks=case_config.tasks,
             )
             for p_name, given in givens.items()
@@ -294,6 +325,6 @@ class TestCaseResult(BaseModel):
 
 
 def make_content_playbook(
-        raw_content: list[dict[str, Any] | str],
+        raw_content: list[dict[str, Any]],
         field_name: str = "tasks") -> list[dict[str, Any]]:
     return [{**PLAYBOOK_DEFAULT_CONTENT, field_name: raw_content}]
