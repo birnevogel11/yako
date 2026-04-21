@@ -49,9 +49,16 @@ def _create_local_ansible_config(
 
 def _create_playbook_from_tasks(case: TestCase, ws_dir: Path) -> TestCase:
     playbook_path = ws_dir / "test_case_playbook.yaml"
-    content = make_content_playbook(case.tasks)
+    content = make_content_playbook(case.tasks, field_name="tasks")
     playbook_path.write_text(safe_dump(content))
     return case.model_copy(update={"playbooks": [playbook_path], "tasks": []})
+
+
+def _create_playbook_from_roles(case: TestCase, ws_dir: Path) -> TestCase:
+    playbook_path = ws_dir / "test_case_playbook.yaml"
+    content = make_content_playbook(case.roles, field_name="roles")
+    playbook_path.write_text(safe_dump(content))
+    return case.model_copy(update={"playbooks": [playbook_path], "roles": []})
 
 
 class LocalTestCaseRunner:
@@ -81,6 +88,8 @@ class LocalTestCaseRunner:
 
             if case.tasks:
                 case = _create_playbook_from_tasks(case, ws_dir)
+            if case.roles:
+                case = _create_playbook_from_roles(case, ws_dir)
 
             yako_test_case_path = ws_dir / "test_case.yaml"
             callback_config = case.dump_yako_callback_config(yako_test_case_path)

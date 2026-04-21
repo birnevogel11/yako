@@ -78,16 +78,14 @@ def _resolve_playbooks_path(
 
 
 def _validate_tasks_and_playbooks(test_case: TestCaseInputConfig | TestCase) -> None:
-    if not test_case.playbooks and not test_case.tasks:
-        msg = f"Test case require playbooks or tasks. name: {test_case.name}"
+    fields_exist = [f for f in [test_case.playbooks, test_case.roles, test_case.tasks] if f]
+
+    if len(fields_exist) == 0:
+        msg = f"Test case requires playbooks, roles, or tasks. name: {test_case.name}"
         raise ValueError(msg)
 
-    if test_case.playbooks and test_case.tasks:
-        msg = f"Test case can only provide playbooks or tasks. name: {test_case.name}"
-        raise ValueError(msg)
-
-    if not test_case.playbooks and not test_case.tasks:
-        msg = f"Test case must contains playbooks or tasks. name: {test_case.name}"
+    if len(fields_exist) > 1:
+        msg = f"Test case can only provide one of: playbooks, roles, or tasks. name: {test_case.name}"
         raise ValueError(msg)
 
 
@@ -98,6 +96,7 @@ class TestCaseInputConfig(BaseModel):
     name: str
     given: TestCaseGiven = TestCaseGiven()
     playbooks: list[str] = []
+    roles: list[str] = []
     tasks: list[dict[str, Any]] = []
     parametrize: dict[str, TestCaseGiven] = {}
 
@@ -117,6 +116,7 @@ class TestCase(BaseModel):
     display_name: str = ""
     given: TestCaseGiven = TestCaseGiven()
     playbooks: list[Path] = []
+    roles: list[Path] = []
     tasks: list[dict[str, Any]] = []
 
     @classmethod
@@ -150,6 +150,7 @@ class TestCase(BaseModel):
                 playbooks=_resolve_playbooks_path(
                     module_config.path, case_config.playbooks
                 ),
+                roles=case_config.roles,
                 tasks=case_config.tasks,
             )
             for p_name, given in givens.items()
@@ -192,11 +193,20 @@ class TestCase(BaseModel):
     def has_playbooks(self) -> bool:
         return bool(self.playbooks)
 
+    def has_roles(self) -> bool:
+        return bool(self.roles)
+
     def does_playbook_exists(self) -> bool:
         return bool(self.playbooks) and all(p.exists() for p in self.playbooks)
 
     def not_found_playbooks(self) -> list[Path]:
         return [p for p in self.playbooks if not p.exists()]
+
+    def does_role_exists(self) -> bool:
+        return bool(self.roles) and all(p.exists() for p in self.roles)
+
+    def not_found_roles(self) -> list[Path]:
+        return [p for p in self.roles if not p.exists()]
 
 
 class TestCaseResultState(enum.Enum):
@@ -281,5 +291,5 @@ class TestCaseResult(BaseModel):
         )
 
 
-def make_content_playbook(raw_content: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [{**PLAYBOOK_DEFAULT_CONTENT, "tasks": raw_content}]
+def make_content_playbook(raw_content: list[dict[str, Any]], field_name: str = "tasks") -> list[dict[str, Any]]:
+    return [{**PLAYBOOK_DEFAULT_CONTENT, field_name: raw_content}]
