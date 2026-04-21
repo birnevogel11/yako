@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from yako.ansible import make_ansible_playbook_cmd, make_yako_ansible_config
 from yako.resolve import resolve_roles_path
 from yako.runner.utils import run_command
-from yako.test_case import make_tasks_playbook, make_roles_playbook
+from yako.test_case import make_roles_playbook, make_tasks_playbook
 from yako.yaml import safe_dump
 
 if TYPE_CHECKING:

@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
+from yako.config import RepoRoleConfig
 from yako.consts import YAKO_TEST_CONFIG_KEY
 from yako.given import TestCaseGiven
 from yako.utils import not_test
 from yako.yaml import safe_dump
-from yako.config import RepoRoleConfig
 
 if TYPE_CHECKING:
     import subprocess
@@ -78,15 +78,15 @@ def _resolve_playbooks_path(
     return resolved_paths
 
 def _resolve_roles_path(
-    test_module_path: Path, roles_path: list[str], base_dirs: list[Path] = [],
-ansible_roles_paths: list[Path] = []) -> list[Path]:
+    test_module_path: Path, roles_path: list[str], base_dirs: list[Path] | None = None,
+ansible_roles_paths: list[Path] | None = None) -> list[Path]:
     search_bases = [
         test_module_path.resolve().parent,
         Path.cwd()
     ]
 
-    search_bases.extend([p.resolve() for p in ansible_roles_paths])
-    search_bases.extend([p.resolve() for p in base_dirs])
+    search_bases.extend([p.resolve() for p in ansible_roles_paths or []])
+    search_bases.extend([p.resolve() for p in base_dirs or []])
 
     resolved_paths = []
     for name in roles_path:
@@ -174,7 +174,8 @@ class TestCase(BaseModel):
                 for name, given in case_config.parametrize.items()
             }
 
-        roles_paths = [Path(p.path if isinstance(p, RepoRoleConfig) else p) for p in config.ansible.roles_path]
+        roles_paths = [Path(p.path if isinstance(p, RepoRoleConfig) else p)
+                       for p in config.ansible.roles_path]
         return [
             cls(
                 name=case_config.name,
