@@ -193,8 +193,8 @@ class YakoInternalState(BaseModel):
             next(
                 (
                     task_config
-                    for task_config in self.test_config.given.mock_tasks
-                    if new_task_name == task_config.name
+                    for task_config in self.test_config.given.state
+                    if new_task_name == task_config.task
                 ),
                 None,
             ),
@@ -291,7 +291,7 @@ def _assert_outputs(
         task_config.assert_outputs,
         var_templar.resolve_variable_expression,
     )
-    _report_assert(task_config.name, passed_asserts, failed_asserts, "outputs")
+    _report_assert(task_config.task, passed_asserts, failed_asserts, "outputs")
 
 
 def _report_assert(

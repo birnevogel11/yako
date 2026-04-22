@@ -1,8 +1,8 @@
 test_cases:
   - name: "test_assert_input"
     given:
-      mock_tasks:
-        - name: Hello world
+      state:
+        - task: Hello world
           assert_inputs:
             - name: msg
               value: Hello
@@ -14,8 +14,8 @@ test_cases:
 
   - name: "test_assert_input_not_equal"
     given:
-      mock_tasks:
-        - name: Hello world
+      state:
+        - task: Hello world
           assert_inputs:
             - name: msg
               value: World
@@ -27,8 +27,8 @@ test_cases:
 
   - name: "test_assert_input"
     given:
-      mock_tasks:
-        - name: Hello world
+      state:
+        - task: Hello world
           assert_outputs:
             - name: msg
               value: Hello
@@ -39,8 +39,8 @@ test_cases:
 
   - name: "test_assert_output_not_equal"
     given:
-      mock_tasks:
-        - name: Hello world
+      state:
+        - task: Hello world
           assert_outputs:
             - name: msg
               value: not_equal

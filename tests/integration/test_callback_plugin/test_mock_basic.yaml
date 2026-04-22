@@ -5,8 +5,8 @@ YAKO_TEST_CASE_CONFIG:
   name: "test_mock_basic"
   path: "fake"
   given:
-    mock_tasks:
-      - name: Create a temp folder
+    state:
+      - task: Create a temp folder
         mock: {}
   tasks:
     - name: Create a temp folder

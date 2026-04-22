@@ -158,7 +158,7 @@ class TestCaseAssert(BaseModel):
 class TestTaskConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    name: str
+    task: str
     extra_vars: dict[str, Any] = Field(default_factory=dict, alias="vars")
     mock: MockActionConfig | MockActionCustomConfig | None = None
 
@@ -215,14 +215,14 @@ class TestCaseGiven(BaseModel):
         list[CopyFileConfig], BeforeValidator(_parse_copy_file_config_list)
     ] = []
     extra_vars: dict[str, Any] = Field(default_factory=dict, alias="vars")
-    mock_tasks: list[TestTaskConfig] = []
+    state: list[TestTaskConfig] = []
 
     @classmethod
     def from_merge(cls, *givens: Self) -> Self:
-        mock_tasks: OrderedDict[str, TestTaskConfig] = OrderedDict(
-            (mock_task.name, mock_task)
-            for mock_task in itertools.chain.from_iterable(
-                given.mock_tasks for given in givens
+        state: OrderedDict[str, TestTaskConfig] = OrderedDict(
+            (task_state.task, task_state)
+            for task_state in itertools.chain.from_iterable(
+                given.state for given in givens
             )
         )
 
@@ -232,6 +232,6 @@ class TestCaseGiven(BaseModel):
                     itertools.chain.from_iterable(given.files for given in givens)
                 ),
                 "vars": dict(ChainMap(*(given.extra_vars for given in givens))),
-                "mock_tasks": list(mock_tasks.values()),
+                "state": list(state.values()),
             }
         )

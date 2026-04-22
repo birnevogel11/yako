@@ -1,8 +1,8 @@
 test_cases:
   - name: "test_should_be_changed"
     given:
-      mock_tasks:
-        - name: Mock target
+      state:
+        - task: Mock target
           mock:
             changed: true
           should_be_changed: true
@@ -14,8 +14,8 @@ test_cases:
 
   - name: "test_should_be_changed_false"
     given:
-      mock_tasks:
-        - name: Mock target
+      state:
+        - task: Mock target
           should_be_changed: false
 
     tasks:
@@ -25,8 +25,8 @@ test_cases:
 
   - name: "test_should_be_skipped"
     given:
-      mock_tasks:
-        - name: Mock target
+      state:
+        - task: Mock target
           should_be_skipped: true
 
     tasks:
@@ -37,8 +37,8 @@ test_cases:
 
   - name: "test_should_be_skipped_false"
     given:
-      mock_tasks:
-        - name: Mock target
+      state:
+        - task: Mock target
           should_be_skipped: false
 
     tasks:
@@ -48,8 +48,8 @@ test_cases:
 
   - name: "test_should_fail"
     given:
-      mock_tasks:
-        - name: Mock target
+      state:
+        - task: Mock target
           should_fail: true
 
     tasks:
@@ -59,8 +59,8 @@ test_cases:
 
   - name: "test_should_fail_false"
     given:
-      mock_tasks:
-        - name: Mock target
+      state:
+        - task: Mock target
           should_fail: false
 
     tasks:

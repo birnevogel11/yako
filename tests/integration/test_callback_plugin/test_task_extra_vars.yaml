@@ -6,8 +6,8 @@ YAKO_TEST_CASE_CONFIG:
   name: "test_task_extra_vars"
   path: "fake"
   given:
-    mock_tasks:
-      - name: "Mock target"
+    state:
+      - task: "Mock target"
         vars:
           task_extra_var: "whats_life_mean_to_you"
   tasks:
