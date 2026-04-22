@@ -464,8 +464,6 @@ class CallbackModule(CallbackBase):  # type: ignore[misc]
         play_extra_vars = play.get_variable_manager().extra_vars
         try:
             test_config = YakoTestConfig.from_playbook(play_extra_vars)
-            print("476")
-            print(test_config)
         except ValidationError as err:
             msg = f"Invalid Yako test case config. err: {err.errors()}"
             raise YakoAnsiblePluginError(msg)  # noqa: B904
