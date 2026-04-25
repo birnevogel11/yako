@@ -130,6 +130,9 @@ def _run_test_cases(
 
             case_reporter.report_test_case_end(case.display_name, case_result.state)
 
+    # add a bit of space after progress
+    print("\n")
+
     return case_results
 
 
