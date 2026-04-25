@@ -237,8 +237,8 @@ def _assert_stmts(
     ]
 
 
-def _get_task_args(task_args: dict[str, Any], name: str) -> Any:
-    return task_args[name]
+def _get_task_args(var_templar: Templar, name: str) -> Any:
+    return var_templar.resolve_variable_expression(name)
 
 
 def _assert_inputs_loop(task: Task, yako_state: YakoInternalState) -> None:
@@ -250,11 +250,11 @@ def _assert_inputs_loop(task: Task, yako_state: YakoInternalState) -> None:
     for loop_value in task.loop:
         loop_var_templar = var_templar.generate_task_loop_templar(loop_value)
         task_args = loop_var_templar.template_task(task.args)
+        input_templar = Templar(loader=DataLoader(), variables=task_args)
 
         # Find one of match
         passed_asserts, failed_asserts = _assert_stmts(
-            task_config.assert_inputs,
-            functools.partial(_get_task_args, task_args),
+            task_config.assert_inputs, functools.partial(_get_task_args, input_templar)
         )
         if passed_asserts and not failed_asserts:
             return
@@ -269,9 +269,11 @@ def _assert_inputs_normal(task: Task, yako_state: YakoInternalState) -> None:
         return
 
     task_args = var_templar.template_task(task.args)
+    input_templar = Templar(loader=DataLoader(), variables=task_args)
+
     passed_asserts, failed_asserts = _assert_stmts(
         task_config.assert_inputs,
-        functools.partial(_get_task_args, task_args),
+        functools.partial(_get_task_args, input_templar),
     )
     _report_assert(task.name, passed_asserts, failed_asserts, "inputs")
 
@@ -507,7 +509,6 @@ class CallbackModule(CallbackBase):  # type: ignore[misc]
                         task.args
                     )
                 )
-                print(task.args)
 
             # Check inputs
             if task_config.assert_inputs:
