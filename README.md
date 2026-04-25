@@ -7,6 +7,7 @@ Inspired by [Monkeyble](https://github.com/HewlettPackard/monkeyble), with key d
 - Each test case can run in an isolated Docker container
 - Hierarchical configuration (global → module → test case)
 - Built-in `yako_assert` module for inline assertions inside playbooks
+- Supports Roles
 
 ## Running Yako
 
@@ -101,9 +102,9 @@ test_cases:
           msg: "Hello, world!"
 ```
 
-### Playbooks vs Inline Tasks
+### Playbooks vs Roles vs Inline Tasks
 
-Each test case must specify either `playbooks` or `tasks`, not both.
+Each test case must specify only one of `playbooks`, `roles`, or `tasks`.
 
 **Reference an existing playbook:**
 
@@ -118,6 +119,17 @@ Playbook search paths (in order):
 1. `<test_file_dir>/playbooks/`
 2. `<base_dir>/playbooks/`
 3. Repository-level playbook paths from config
+
+**Reference an existing role:**
+
+```yaml
+test_cases:
+  - name: "test_with_playbook"
+    roles:
+      - "my_role"
+```
+
+Roles use the `roles_path` ansible config. Note that this isn't a file path.
 
 **Define inline tasks directly:**
 
@@ -142,6 +154,10 @@ tests/yako/
 ├── test_basic.yaml              # Simple: tests + playbooks together
 ├── playbooks/
 │   └── shared_playbook.yaml
+│── roles/
+│   └── my_role/
+│       └── tasks/
+│           └── main.yaml
 ├── files/
 │   └── test_data.txt
 └── my_role_tests/               # Nested: organized by topic

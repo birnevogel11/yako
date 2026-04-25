@@ -10,7 +10,7 @@ import yaml
 from yako.ansible import make_ansible_playbook_cmd, make_yako_ansible_config
 from yako.resolve import resolve_roles_path
 from yako.runner.utils import run_command
-from yako.test_case import make_content_playbook
+from yako.test_case import make_tasks_playbook
 
 if TYPE_CHECKING:
     import subprocess
@@ -91,7 +91,7 @@ def _create_ct_playbook(case: TestCase, ws_dir: Path, ws_ct_dir: Path) -> TestCa
     playbook_path = ws_dir / "test_case_playbook.yaml"
     playbook_ct_path = ws_ct_dir / playbook_path.name
 
-    playbook_path.write_text(yaml.dump(make_content_playbook(case.tasks)))
+    playbook_path.write_text(yaml.dump(make_tasks_playbook(case.tasks)))
 
     return case.model_copy(update={"playbooks": [playbook_ct_path], "tasks": []})
 

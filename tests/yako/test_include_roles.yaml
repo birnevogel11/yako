@@ -1,0 +1,8 @@
+test_cases:
+  - name: "test_hello"
+    tasks:
+      - name: Test role
+        include_role:
+          name: show-vars
+        vars:
+          apple_version: "2.5"

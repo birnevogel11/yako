@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
+from yako.config import RepoRoleConfig
 from yako.consts import YAKO_TEST_CONFIG_KEY
 from yako.given import TestCaseGiven
 from yako.utils import not_test
@@ -76,19 +77,49 @@ def _resolve_playbooks_path(
 
     return resolved_paths
 
+def _resolve_roles_path(
+    test_module_path: Path, roles_path: list[str], base_dirs: list[Path] | None = None,
+ansible_roles_paths: list[Path] | None = None) -> list[Path]:
+    search_bases = [
+        test_module_path.resolve().parent,
+        Path.cwd()
+    ]
+
+    search_bases.extend([p.resolve() for p in ansible_roles_paths or []])
+    search_bases.extend([p.resolve() for p in base_dirs or []])
+
+    resolved_paths = []
+    for name in roles_path:
+        resolved_path = None
+        if (resolved_path := Path(name)).is_absolute():
+            logger.debug("%s is an absolute path. Skip to resolve it")
+        else:
+            resolved_path = next((base / name for base in search_bases), None)
+            if not resolved_path:
+                msg = (
+                    f"Can not resolve the role path. "
+                    f"test_module_path: {test_module_path}, "
+                    f"role_path: {name}"
+                )
+                raise ValueError(msg)
+
+        resolved_paths.append(resolved_path)
+
+    return resolved_paths
 
 def _validate_tasks_and_playbooks(test_case: TestCaseInputConfig | TestCase) -> None:
-    if not test_case.playbooks and not test_case.tasks:
-        msg = f"Test case require playbooks or tasks. name: {test_case.name}"
-        raise ValueError(msg)
+    fields = [test_case.playbooks, test_case.roles, test_case.tasks]
+    fields_exist = [f for f in fields if f]
 
-    if test_case.playbooks and test_case.tasks:
-        msg = f"Test case can only provide playbooks or tasks. name: {test_case.name}"
-        raise ValueError(msg)
+    if len(fields_exist) == 0:
+        msg = ("Test case requires playbooks, roles, or tasks. ",
+               f"name: {test_case.name}")
+        raise ValueError("".join(msg))
 
-    if not test_case.playbooks and not test_case.tasks:
-        msg = f"Test case must contains playbooks or tasks. name: {test_case.name}"
-        raise ValueError(msg)
+    if len(fields_exist) > 1:
+        msg = ("Test case can only provide one of: ",
+               f"playbooks, roles, or tasks. name: {test_case.name}")
+        raise ValueError("".join(msg))
 
 
 @not_test
@@ -98,6 +129,7 @@ class TestCaseInputConfig(BaseModel):
     name: str
     given: TestCaseGiven = TestCaseGiven()
     playbooks: list[str] = []
+    roles: list[str] = []
     tasks: list[dict[str, Any]] = []
     parametrize: dict[str, TestCaseGiven] = {}
 
@@ -117,6 +149,7 @@ class TestCase(BaseModel):
     display_name: str = ""
     given: TestCaseGiven = TestCaseGiven()
     playbooks: list[Path] = []
+    roles: list[Path] = []
     tasks: list[dict[str, Any]] = []
 
     @classmethod
@@ -141,6 +174,8 @@ class TestCase(BaseModel):
                 for name, given in case_config.parametrize.items()
             }
 
+        roles_paths = [Path(p.path if isinstance(p, RepoRoleConfig) else p)
+                       for p in config.ansible.roles_path]
         return [
             cls(
                 name=case_config.name,
@@ -149,6 +184,10 @@ class TestCase(BaseModel):
                 given=given,
                 playbooks=_resolve_playbooks_path(
                     module_config.path, case_config.playbooks
+                ),
+                roles=_resolve_roles_path(
+                    module_config.path, case_config.roles,
+                    config.base_dir, roles_paths
                 ),
                 tasks=case_config.tasks,
             )
@@ -192,11 +231,20 @@ class TestCase(BaseModel):
     def has_playbooks(self) -> bool:
         return bool(self.playbooks)
 
+    def has_roles(self) -> bool:
+        return bool(self.roles)
+
     def does_playbook_exists(self) -> bool:
         return bool(self.playbooks) and all(p.exists() for p in self.playbooks)
 
     def not_found_playbooks(self) -> list[Path]:
         return [p for p in self.playbooks if not p.exists()]
+
+    def does_role_exists(self) -> bool:
+        return bool(self.roles) and all(p.exists() for p in self.roles)
+
+    def not_found_roles(self) -> list[Path]:
+        return [p for p in self.roles if not p.exists()]
 
 
 class TestCaseResultState(enum.Enum):
@@ -281,5 +329,8 @@ class TestCaseResult(BaseModel):
         )
 
 
-def make_content_playbook(raw_content: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def make_tasks_playbook(raw_content: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return [{**PLAYBOOK_DEFAULT_CONTENT, "tasks": raw_content}]
+
+def make_roles_playbook(raw_content: list[str]) -> list[dict[str, Any]]:
+    return [{**PLAYBOOK_DEFAULT_CONTENT, "roles": raw_content}]
