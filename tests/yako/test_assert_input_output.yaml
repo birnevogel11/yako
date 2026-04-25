@@ -25,7 +25,7 @@ test_cases:
         debug:
           msg: Hello
 
-  - name: "test_assert_input"
+  - name: "test_assert_output"
     given:
       state:
         - task: Hello world
