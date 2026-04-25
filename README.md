@@ -93,8 +93,8 @@ test_cases:
     given:
       vars:
         feature_flag: true
-      mock_tasks:
-        - name: "Install packages"
+      state:
+        - task: "Install packages"
           mock: {}
     tasks:
       - name: Say hello
@@ -172,7 +172,7 @@ tests/yako/
 
 The `given` block configures the test environment. It can be defined at three levels, which merge together (global → module → test case):
 
-- **`files`** and **`mock_tasks`**: concatenated across levels
+- **`files`** and **`state`**: concatenated across levels
 - **`vars`**: merged as a dict (more specific level wins)
 
 ### Extra Variables
@@ -226,8 +226,8 @@ Prevent a task from running without specifying any result:
 
 ```yaml
 given:
-  mock_tasks:
-    - name: "Install packages"
+  state:
+    - task: "Install packages"
       mock: {}
 ```
 
@@ -237,8 +237,8 @@ Return specific values from the mocked task:
 
 ```yaml
 given:
-  mock_tasks:
-    - name: "Create temp file"
+  state:
+    - task: "Create temp file"
       mock:
         changed: true
         result_dict:
@@ -253,8 +253,8 @@ Replace a task's module with a different one entirely:
 
 ```yaml
 given:
-  mock_tasks:
-    - name: "Create temp file"
+  state:
+    - task: "Create temp file"
       mock:
         custom_action:
           set_fact:
@@ -267,8 +267,8 @@ Inject variables that are only available during a specific task:
 
 ```yaml
 given:
-  mock_tasks:
-    - name: "Deploy application"
+  state:
+    - task: "Deploy application"
       vars:
         deploy_version: "1.2.3"
       mock: {}
@@ -282,8 +282,8 @@ Assert on variables **before** (`assert_inputs`) or **after** (`assert_outputs`)
 
 ```yaml
 given:
-  mock_tasks:
-    - name: "Deploy to server"
+  state:
+    - task: "Deploy to server"
       mock: {}
       assert_inputs:
         - name: "target_host"
@@ -344,17 +344,17 @@ Verify task behavior without checking specific values:
 
 ```yaml
 given:
-  mock_tasks:
-    - name: "Conditional task"
+  state:
+    - task: "Conditional task"
       should_be_skipped: true    # Assert the task was skipped
       mock: {}
 
-    - name: "Modify config"
+    - task: "Modify config"
       should_be_changed: true    # Assert the task reported changed
       mock:
         changed: true
 
-    - name: "Bad input handler"
+    - task: "Bad input handler"
       should_fail: true          # Assert the task failed
       mock: {}
 ```
@@ -384,7 +384,7 @@ This creates two test cases:
 - `test_deploy.yaml::test_deploy[staging]`
 - `test_deploy.yaml::test_deploy[production]`
 
-Each variant can override `vars`, `files`, and `mock_tasks`.
+Each variant can override `vars`, `files`, and `state`.
 
 ## Configuration
 
@@ -497,8 +497,8 @@ Define defaults that apply to **all** test cases:
 given:
   vars:
     ansible_os_family: "Debian"
-  mock_tasks:
-    - name: "Gather facts"
+  state:
+    - task: "Gather facts"
       mock: {}
 ```
 

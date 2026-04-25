@@ -1,8 +1,8 @@
 test_cases:
   - name: "test_mock_basic"
     given:
-      mock_tasks:
-        - name: Create a temp folder
+      state:
+        - task: Create a temp folder
           mock: {}
     tasks:
       - name: Create a temp folder
@@ -12,8 +12,8 @@ test_cases:
 
   - name: "test_mock_changed"
     given:
-      mock_tasks:
-        - name: Create a temp folder
+      state:
+        - task: Create a temp folder
           mock:
             changed: true
             result_dict:
@@ -36,8 +36,8 @@ test_cases:
 
   - name: "test_mock_custom"
     given:
-      mock_tasks:
-        - name: Create a temp folder
+      state:
+        - task: Create a temp folder
           mock:
             custom_action:
               set_fact:

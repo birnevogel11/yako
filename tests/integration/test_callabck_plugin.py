@@ -143,7 +143,7 @@ def _run_test(
     if is_passed and result.returncode:
         msgs.append(f"Return code is {result.returncode}. Expected: 0")
     if search_str not in result.stdout:
-        msgs.append(f"Can not found the string in stdout. str: '{search_str}'")
+        msgs.append(f"Can not find the string in stdout. str: '{search_str}'")
 
     if os.environ.get("YAKO_DEBUG_INTEGRATION_TEST", "0") == "1":
         print(
