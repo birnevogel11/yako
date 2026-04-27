@@ -1,0 +1,11 @@
+name: JP Message
+given:
+  state:
+    - task: JP Message
+      assert_outputs:
+        - name: msg
+          value: "こんにちは {{ message_suffix}}!"
+tasks:
+  - name: JP Message
+    debug:
+      msg: "こんにちは {{ message_suffix}}!"
