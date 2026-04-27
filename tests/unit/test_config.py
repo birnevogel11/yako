@@ -41,7 +41,7 @@ def test_load_config_include(tmp_path: Path) -> None:
     config_path.write_text("vars:\n  test_var: this value")
 
     with cd(tmp_path):
-        config = init_config()
+        config = init_config(base_path=[tmp_path], config_path=tmp_path / "yako.yaml")
         assert config.given.extra_vars["test_var"] == "this value"
 
 
@@ -61,5 +61,5 @@ def test_load_config_include_glob(tmp_path: Path) -> None:
         """)
 
     with cd(tmp_path):
-        config = init_config()
+        config = init_config(base_path=[tmp_path], config_path=tmp_path / "yako.yaml")
         assert len(config.given.extra_vars["users"]) == 3
