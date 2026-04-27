@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar
 from urllib.parse import urlparse
 
 import yaml
+import yaml_include
 from pydantic import (
     AnyUrl,
     BaseModel,
@@ -305,6 +306,8 @@ def _init_input_config(
         path = config_path
     elif raw_path := os.environ.get(YAKO_CONFIG_PATH_ENV_NAME):
         path = Path(raw_path)
+
+    yaml.add_constructor("!inc", yaml_include.Constructor(), yaml.SafeLoader)
 
     input_config = (
         YakoInputConfig.model_validate(
