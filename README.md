@@ -305,22 +305,24 @@ tasks:
 
 ### Assertion Modes
 
-| Mode | Description |
-|------|-------------|
-| `==` | Equal (default) |
-| `!=` | Not equal |
-| `<` | Less than |
-| `>` | Greater than |
-| `<=` | Less than or equal |
-| `>=` | Greater than or equal |
-| `in` | Value is in collection |
-| `not_in` | Value is not in collection |
-| `is_none` | Value is None |
-| `is_not_none` | Value is not None |
-| `is_true` | Value is truthy |
-| `is_false` | Value is falsy |
-| `is_not_true` | Value is not truthy |
-| `is_not_false` | Value is not falsy |
+| Mode           | Description                               |
+|----------------|-------------------------------------------|
+| `==`           | Equal (default)                           |
+| `!=`           | Not equal                                 |
+| `<`            | Less than                                 |
+| `>`            | Greater than                              |
+| `<=`           | Less than or equal                        |
+| `>=`           | Greater than or equal                     |
+| `in`           | Value is in collection                    |
+| `not_in`       | Value is not in collection                |
+| `is_none`      | Value is None                             |
+| `is_not_none`  | Value is not None                         |
+| `is_true`      | Value is truthy                           |
+| `is_false`     | Value is falsy                            |
+| `is_not_true`  | Value is not truthy                       |
+| `is_not_false` | Value is not falsy                        |
+| `matches`      | Value matches regular expression          |
+| `not_matches`  | Value does not match regular expression   |
 
 ### State Checks
 

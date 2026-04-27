@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import enum
+import re
 import unittest
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -50,11 +51,14 @@ class AssertMode(enum.Enum):
     IsFalse = "is_false"
     IsNotTrue = "is_not_true"
     IsNotFalse = "is_not_false"
+    Matches = "matches"
+    NotMatches = "not_matches"
 
 
 def _test_case_obj() -> unittest.TestCase:
     case = unittest.TestCase()
     case.maxDiff = 1024
+    case.longMessage = False
 
     return case
 
@@ -93,6 +97,12 @@ MAPPING_ASSERT_FUNCTIONS = {
     ),
     AssertMode.IsNotFalse: lambda a, e: _test_case_obj().assertTrue(  # noqa: ARG005, PT009
         a
+    ),
+    AssertMode.Matches: lambda a, e: _test_case_obj().assertTrue(  # noqa: PT009
+        re.search(e, a) is not None, "value doesn't match"
+    ),
+    AssertMode.NotMatches: lambda a, e: _test_case_obj().assertTrue(  # noqa: PT009
+        re.search(e, a) is None, "value matches"
     ),
 }
 

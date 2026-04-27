@@ -63,6 +63,8 @@ def test_assert_check_true() -> None:
         ([], None, "is_false"),
         ([], None, "is_not_true"),
         (2, None, "is_not_false"),
+        ("assert 0123", "^assert\\s\\d+", "matches"),
+        ("assert 0123", "^assert\\d+", "not_matches"),
     ],
 )
 def test_assert_check(actual: Any, expected: Any, mode: str) -> None:
@@ -92,6 +94,8 @@ def test_assert_check(actual: Any, expected: Any, mode: str) -> None:
         (2, None, "is_false", snapshot("2 is not false")),
         ([2], None, "is_not_true", snapshot("[2] is not false")),
         ([], None, "is_not_false", snapshot("[] is not true")),
+        ("assert 0123", "^junk", "matches", snapshot("value doesn't match")),
+        ("assert 0123", "^assert", "not_matches", snapshot("value matches")),
     ],
 )
 def test_assert_check_failed(actual: Any, expected: Any, mode: str, msg: str) -> None:
