@@ -1,2 +1,2 @@
-given: !inc tests/yako/includes/global_given.yaml
-test_cases: !inc tests/yako/includes/case_*.yaml
+given: !inc includes/global_given.yaml
+test_cases: !inc includes/case_*.yaml
