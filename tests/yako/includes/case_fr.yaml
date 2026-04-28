@@ -1,0 +1,11 @@
+name: FR Message
+given:
+  state:
+    - task: FR Message
+      assert_outputs:
+        - name: msg
+          value: "Bonjour {{ message_suffix}}!"
+tasks:
+  - name: FR Message
+    debug:
+      msg: "Bonjour {{ message_suffix}}!"

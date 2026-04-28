@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar
 from urllib.parse import urlparse
 
 import yaml
+import yaml_include
 from pydantic import (
     AnyUrl,
     BaseModel,
@@ -300,11 +301,17 @@ class YakoConfig(BaseModel):
 def _init_input_config(
     base_path: list[Path] | None = None, config_path: Path | None = None
 ) -> YakoInputConfig:
+    default_base_path = Path("tests/yako")
     path = None
     if config_path:
         path = config_path
     elif raw_path := os.environ.get(YAKO_CONFIG_PATH_ENV_NAME):
         path = Path(raw_path)
+
+    yaml_base_dir = base_path[0] if base_path else default_base_path
+    yaml.add_constructor(
+        "!inc", yaml_include.Constructor(base_dir=yaml_base_dir), yaml.SafeLoader
+    )
 
     input_config = (
         YakoInputConfig.model_validate(
@@ -315,12 +322,8 @@ def _init_input_config(
     )
     if base_path:
         input_config = input_config.model_copy(update={"base_dir": base_path})
-    else:
-        default_base_path = Path("tests/yako")
-        if default_base_path.is_dir():
-            input_config = input_config.model_copy(
-                update={"base_dir": [default_base_path]}
-            )
+    elif default_base_path.is_dir():
+        input_config = input_config.model_copy(update={"base_dir": [default_base_path]})
 
     return input_config
 

@@ -101,6 +101,25 @@ test_cases:
           msg: "Hello, world!"
 ```
 
+Files can include other files or urls by using the `!inc <path|url>` tag.
+
+```yaml
+# Module-level given (applies to all test cases in this file)
+given: !inc global_given.yaml
+
+test_cases:
+  - name: "test_something"
+    given:
+      vars: !inc /opt/system/vars.yaml
+      state:
+        - task: "Install packages"
+          mock: !inv https://github.com/path/to/my-mock.yaml
+    tasks:
+      - name: Say hello
+        debug:
+          msg: "Hello, world!"
+```
+
 ### Playbooks vs Inline Tasks
 
 Each test case must specify either `playbooks` or `tasks`, not both.
