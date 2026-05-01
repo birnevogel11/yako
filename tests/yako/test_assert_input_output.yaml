@@ -12,6 +12,20 @@ test_cases:
         debug:
           msg: Hello
 
+  - name: "test_assert_input_deep"
+    given:
+      state:
+        - task: Hello world
+          assert_inputs:
+            - name: msg.greeting
+              value: Hello
+
+    tasks:
+      - name: Hello world
+        debug:
+          msg:
+            greeting: Hello
+
   - name: "test_assert_input_not_equal"
     given:
       state:
@@ -25,7 +39,7 @@ test_cases:
         debug:
           msg: Hello
 
-  - name: "test_assert_input"
+  - name: "test_assert_output"
     given:
       state:
         - task: Hello world
@@ -49,3 +63,35 @@ test_cases:
       - name: Hello world
         debug:
           msg: Hello
+
+  - name: "test_assert_output_deep"
+    given:
+      state:
+        - task: Hello world
+          assert_outputs:
+            - name: msg.hellos[1]
+              value: Bonjour le monde
+
+    tasks:
+      - name: Hello world
+        debug:
+          msg:
+            hellos:
+              - Hello World
+              - Bonjour le monde
+
+  - name: "test_assert_output_deeper"
+    given:
+      state:
+        - task: Hello world
+          assert_outputs:
+            - name: "msg.hellos[1].greeting"
+              value: Bonjour le monde
+
+    tasks:
+      - name: Hello world
+        debug:
+          msg:
+            hellos:
+              - greeting: Hello World
+              - greeting: Bonjour le monde

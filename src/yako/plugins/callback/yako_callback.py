@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from ansible import constants as C  # noqa: N812
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.errors import AnsibleUndefinedVariable
 from ansible.parsing.dataloader import DataLoader
 from ansible.plugins.callback import CallbackBase
@@ -237,8 +238,9 @@ def _assert_stmts(
     ]
 
 
-def _get_task_args(task_args: dict[str, Any], name: str) -> Any:
-    return task_args[name]
+def _get_task_args(var_templar: Templar, name: str) -> Any:
+    trusted_name_template = TrustedAsTemplate().tag(f"{{{{ {name} }}}}")
+    return var_templar.template(trusted_name_template)
 
 
 def _assert_inputs_loop(task: Task, yako_state: YakoInternalState) -> None:
@@ -250,11 +252,11 @@ def _assert_inputs_loop(task: Task, yako_state: YakoInternalState) -> None:
     for loop_value in task.loop:
         loop_var_templar = var_templar.generate_task_loop_templar(loop_value)
         task_args = loop_var_templar.template_task(task.args)
+        input_templar = Templar(loader=DataLoader(), variables=task_args)
 
         # Find one of match
         passed_asserts, failed_asserts = _assert_stmts(
-            task_config.assert_inputs,
-            functools.partial(_get_task_args, task_args),
+            task_config.assert_inputs, functools.partial(_get_task_args, input_templar)
         )
         if passed_asserts and not failed_asserts:
             return
@@ -269,9 +271,11 @@ def _assert_inputs_normal(task: Task, yako_state: YakoInternalState) -> None:
         return
 
     task_args = var_templar.template_task(task.args)
+    input_templar = Templar(loader=DataLoader(), variables=task_args)
+
     passed_asserts, failed_asserts = _assert_stmts(
         task_config.assert_inputs,
-        functools.partial(_get_task_args, task_args),
+        functools.partial(_get_task_args, input_templar),
     )
     _report_assert(task.name, passed_asserts, failed_asserts, "inputs")
 
@@ -507,7 +511,6 @@ class CallbackModule(CallbackBase):  # type: ignore[misc]
                         task.args
                     )
                 )
-                print(task.args)
 
             # Check inputs
             if task_config.assert_inputs:
