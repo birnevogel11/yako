@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from ansible import constants as C  # noqa: N812
+from ansible._internal._datatag._tags import TrustedAsTemplate
 from ansible.errors import AnsibleUndefinedVariable
 from ansible.parsing.dataloader import DataLoader
 from ansible.plugins.callback import CallbackBase
@@ -238,7 +239,8 @@ def _assert_stmts(
 
 
 def _get_task_args(var_templar: Templar, name: str) -> Any:
-    return var_templar.resolve_variable_expression(name)
+    trusted_name_template = TrustedAsTemplate().tag(f"{{{{ {name} }}}}")
+    return var_templar.template(trusted_name_template)
 
 
 def _assert_inputs_loop(task: Task, yako_state: YakoInternalState) -> None:
